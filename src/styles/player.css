@@ -1,0 +1,607 @@
+/* De speler. Alles hier is losgekoppeld van de editor-interface: dit is wat de
+   kijker ziet, en het moet net zo goed werken op een telefoon als op een
+   breedbeeldscherm. */
+
+.vp {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: var(--font);
+  container-type: inline-size;
+}
+
+.vp-empty {
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  text-align: center;
+  font-size: 15px;
+}
+
+.vp-scroller {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.vp-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+/* Het toneel blijft in beeld terwijl de aanloopstrook eronder de scrollengte
+   levert. Alleen zo kunnen de kaarten elkaar wegduwen zonder dat we het
+   scrollen van de browser overnemen. */
+.vp-stage {
+  position: sticky;
+  top: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.vp-runway {
+  pointer-events: none;
+}
+
+.vp-slide {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  will-change: transform;
+}
+.vp-slide.is-visible {
+  visibility: visible;
+}
+.vp-slide.is-fade {
+  transition: opacity 160ms ease;
+  opacity: 0;
+}
+.vp-slide.is-fade.is-visible {
+  opacity: 1;
+}
+
+/* ---------- de kaart ---------- */
+
+.pc {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+.pc-bleed,
+.pc-framed {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.pc-bleed img,
+.pc-framed img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Bij tekst onder of naast het beeld krijgt de foto maar een deel van de kaart
+   en staat de tekst op de achtergrondkleur — geen sluier nodig, en gegarandeerd
+   leesbaar ongeacht hoe druk de foto is. Het beeld gaat daarvoor uit de
+   absolute positionering terug de flexrij in. */
+.pc-imagetext.is-below,
+.pc-imagetext.is-beside {
+  justify-content: flex-start;
+}
+.pc-imagetext.is-below .pc-framed,
+.pc-imagetext.is-beside .pc-framed {
+  position: relative;
+  inset: auto;
+  flex-shrink: 0;
+}
+.pc-imagetext.is-below .pc-framed {
+  height: 46%;
+  width: 100%;
+}
+.pc-imagetext.is-below .pc-inner,
+.pc-imagetext.is-beside .pc-inner {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.pc-imagetext.is-beside {
+  flex-direction: row;
+}
+.pc-imagetext.is-beside .pc-framed {
+  width: 50%;
+  height: 100%;
+}
+.pc-imagetext.is-beside .pc-inner {
+  width: 50%;
+  max-width: none;
+}
+
+/* Naast elkaar werkt niet op een telefoon: twee kolommen van 190 pixels leest
+   niemand. Onder deze breedte valt 'naast' terug op 'onder'. */
+@container (max-width: 640px) {
+  .pc-imagetext.is-beside {
+    flex-direction: column;
+  }
+  .pc-imagetext.is-beside .pc-framed {
+    width: 100%;
+    height: 42%;
+  }
+  .pc-imagetext.is-beside .pc-inner {
+    width: 100%;
+  }
+}
+
+.pc-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.82) 0%,
+    rgba(0, 0, 0, 0.55) 34%,
+    rgba(0, 0, 0, 0.1) 66%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+}
+.pc-veil-strong {
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.78) 0%,
+    rgba(0, 0, 0, 0.62) 50%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+}
+
+.pc-inner {
+  position: relative;
+  padding: clamp(20px, 4cqi, 60px);
+  max-width: 72ch;
+  /* Een kop van negentig tekens met vier regels tekst past niet altijd op een
+     telefoon. Liever een eigen scrollbalkje dan afgekapte inhoud. */
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.pc-center {
+  margin: auto;
+  text-align: center;
+  max-width: 60ch;
+}
+.pc-middle {
+  margin: auto 0;
+}
+.pc-bottom {
+  margin-top: auto;
+}
+
+.pc-meta {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 10px;
+  font-size: clamp(12px, 1.5cqi, 14px);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+}
+.pc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pc-h1 {
+  margin: 0 0 18px;
+  font-size: clamp(30px, 6cqi, 68px);
+  line-height: 1.04;
+  letter-spacing: -0.028em;
+  font-weight: 700;
+  text-wrap: balance;
+}
+.pc-h2 {
+  margin: 0 0 14px;
+  font-size: clamp(21px, 3.4cqi, 40px);
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  font-weight: 700;
+  text-wrap: balance;
+}
+.pc-h3 {
+  margin: 0 0 16px;
+  font-size: clamp(18px, 2.4cqi, 28px);
+  line-height: 1.2;
+  letter-spacing: -0.012em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.pc-standfirst {
+  margin: 0 0 22px;
+  font-size: clamp(15px, 1.9cqi, 21px);
+  line-height: 1.5;
+  opacity: 0.88;
+}
+
+.pc-body {
+  margin: 0;
+  font-size: clamp(14px, 1.6cqi, 18px);
+  line-height: 1.6;
+  opacity: 0.92;
+  max-width: 62ch;
+}
+.pc-body-lead {
+  font-size: clamp(16px, 2cqi, 22px);
+  line-height: 1.55;
+}
+
+.pc-badge {
+  display: inline-block;
+  padding: 6px 15px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.pc-hint {
+  margin: 30px 0 0;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.pc-credit {
+  margin: 14px 0 0;
+  font-size: clamp(11px, 1.2cqi, 13px);
+  line-height: 1.45;
+  opacity: 0.62;
+  max-width: 60ch;
+}
+
+.pc-quotetext {
+  position: relative;
+  margin: 0;
+  font-size: clamp(20px, 3.2cqi, 38px);
+  line-height: 1.28;
+  letter-spacing: -0.014em;
+  font-weight: 500;
+  text-wrap: balance;
+}
+.pc-quotemark {
+  font-size: 1.6em;
+  line-height: 0;
+  vertical-align: -0.24em;
+  margin-right: 0.06em;
+  font-weight: 700;
+}
+.pc-attrib {
+  margin: 18px 0 0;
+  font-size: clamp(13px, 1.5cqi, 16px);
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.pc-graphic {
+  justify-content: center;
+}
+.pc-graphic .pc-inner {
+  max-width: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.pc-graphicframe {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.pc-graphicframe img {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  display: block;
+  border-radius: var(--radius-card);
+}
+
+.pc-empty {
+  border: 1px dashed;
+  border-radius: var(--radius-card);
+  padding: 28px;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* ---------- de as ---------- */
+
+.ax {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  pointer-events: none;
+  font-size: 12px;
+}
+.ax button {
+  pointer-events: auto;
+}
+
+/* Over een lichte foto verdwijnt een dunne as. Een zachte verloopsluier eronder
+   houdt hem leesbaar zonder een balk te worden. */
+.ax::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+.ax-left::before {
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0));
+}
+.ax-right::before {
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0));
+}
+.ax-top::before {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0));
+}
+.ax-bottom::before {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0));
+}
+
+.ax-left,
+.ax-right {
+  top: 0;
+  bottom: 0;
+  width: 148px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 0;
+}
+.ax-left {
+  left: 0;
+  padding-left: 18px;
+}
+.ax-right {
+  right: 0;
+  padding-right: 18px;
+  align-items: flex-end;
+}
+
+.ax-top,
+.ax-bottom {
+  left: 0;
+  right: 0;
+  height: 74px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 24px;
+}
+.ax-top {
+  top: 0;
+}
+.ax-bottom {
+  bottom: 0;
+}
+
+.ax-counter {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.ax-counter span {
+  font-weight: 600;
+}
+
+.ax-track {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.ax-left .ax-track,
+.ax-right .ax-track {
+  width: 100%;
+}
+
+.ax-line,
+.ax-fill {
+  position: absolute;
+  background: var(--ax-line);
+  border-radius: 2px;
+}
+.ax-fill {
+  background: var(--ax-accent);
+}
+
+.ax-left .ax-line,
+.ax-right .ax-line {
+  top: 0;
+  bottom: 0;
+  width: 2px;
+}
+.ax-left .ax-fill,
+.ax-right .ax-fill {
+  top: 0;
+  width: 2px;
+}
+.ax-left .ax-line,
+.ax-left .ax-fill {
+  left: 5px;
+}
+.ax-right .ax-line,
+.ax-right .ax-fill {
+  right: 5px;
+}
+
+.ax-top .ax-line,
+.ax-bottom .ax-line {
+  left: 0;
+  right: 0;
+  height: 2px;
+  top: 5px;
+}
+.ax-top .ax-fill,
+.ax-bottom .ax-fill {
+  left: 0;
+  height: 2px;
+  top: 5px;
+}
+
+.ax-stops {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+}
+.ax-left .ax-stops,
+.ax-right .ax-stops {
+  flex-direction: column;
+}
+
+.ax-stop button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.ax-right .ax-stop button {
+  flex-direction: row-reverse;
+}
+.ax-top .ax-stop button,
+.ax-bottom .ax-stop button {
+  flex-direction: column;
+  gap: 7px;
+  align-items: center;
+}
+
+/* Een aanraakvlak van 44 pixels rond een stip van 8 — anders is de as op een
+   telefoon niet te bedienen. */
+.ax-hit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+.ax-left .ax-hit,
+.ax-right .ax-hit {
+  left: 6px;
+}
+.ax-right .ax-hit {
+  left: auto;
+  right: 6px;
+  transform: translate(50%, -50%);
+}
+.ax-top .ax-hit,
+.ax-bottom .ax-hit {
+  top: 6px;
+}
+
+.ax-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ax-line);
+  flex-shrink: 0;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+.ax-stop.is-active .ax-dot {
+  background: var(--ax-accent);
+  transform: scale(1.7);
+}
+
+.ax-label {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: opacity 160ms ease;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+}
+.ax-stop.is-active .ax-label {
+  font-weight: 600;
+}
+.ax-label.is-hidden {
+  opacity: 0;
+}
+
+/* Op smalle schermen slokt een as van 148 pixels te veel breedte op. De labels
+   verdwijnen dan en alleen de stippen blijven staan. */
+@container (max-width: 560px) {
+  .ax-left,
+  .ax-right {
+    width: 46px;
+  }
+  .ax-left .ax-label,
+  .ax-right .ax-label {
+    display: none;
+  }
+  .ax-counter {
+    display: none;
+  }
+  .pc-inner {
+    padding-left: 52px;
+  }
+  .vp-axis-right .pc-inner {
+    padding-left: clamp(20px, 4cqi, 60px);
+    padding-right: 52px;
+  }
+  .vp-axis-top .pc-inner {
+    padding-top: 74px;
+  }
+  .vp-axis-bottom .pc-inner {
+    padding-bottom: 74px;
+  }
+}
+
+@container (min-width: 561px) {
+  .vp-axis-left .pc-inner {
+    padding-left: clamp(160px, 12cqi, 200px);
+  }
+  .vp-axis-right .pc-inner {
+    padding-right: clamp(160px, 12cqi, 200px);
+  }
+
+  /* Staat de tekst naast het beeld, dan ligt de as over de fotokolom en niet
+     over de tekst. De ruimte voor de as daar weghalen scheelt de kop een paar
+     regels — anders wordt een lange kop tot vier woorden per regel geknepen. */
+  .vp-axis-left .pc-imagetext.is-beside .pc-inner {
+    padding-left: clamp(20px, 4cqi, 60px);
+  }
+  .vp-axis-right .pc-imagetext.is-beside .pc-inner {
+    padding-right: clamp(20px, 4cqi, 60px);
+  }
+  /* Bij 'naast' staat het beeld links; met de as rechts wisselen ze van kant
+     zodat de as nooit over de tekst valt. */
+  .vp-axis-right .pc-imagetext.is-beside {
+    flex-direction: row-reverse;
+  }
+  .vp-axis-top .pc-inner {
+    padding-top: 90px;
+  }
+  .vp-axis-bottom .pc-inner {
+    padding-bottom: 90px;
+  }
+}

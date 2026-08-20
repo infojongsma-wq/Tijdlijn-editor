@@ -1,0 +1,116 @@
+# Tijdlijn-editor
+
+Een gereedschap waarmee de redactie van RTV Oost een dossier tot een verhaal
+maakt: kaarten met datum, tekst en beeld, afgespeeld als responsieve tijdlijn in
+de huisstijl.
+
+Dit is **fase 1**: een werkend prototype, nog niet bedoeld om echt mee te
+publiceren.
+
+## Wat er werkt
+
+- **Editor** — momenten toevoegen, datum, kop, tekst en beeld invullen. De
+  volgorde volgt automatisch uit de datum.
+- **Zes soorten kaarten** — titelkaart, beeld met tekst, alleen beeld, alleen
+  tekst, citaat en graphic. Om te wisselen zonder je werk kwijt te raken.
+- **Beeld bijstellen** — brandpunt slepen, inzoomen, doorzichtigheid,
+  belichting, contrast en verzadiging. De foto zelf wordt daarbij nooit
+  aangeraakt; alleen de instellingen worden bewaard.
+- **Verticaal scrollen met duw-overgang** — de kaarten duwen elkaar omhoog,
+  zoals de overgang 'duwen' in PowerPoint.
+- **De as** — links, rechts, boven, onder of verborgen. Aanklikbaar, met
+  voortgangsbalk en teller.
+- **Kleuren en contrast** — het palet is aanpasbaar, en de editor waarschuwt als
+  een combinatie te weinig contrast heeft.
+- **Ongedaan maken** — twintig stappen terug, en weer vooruit (Ctrl+Z /
+  Ctrl+Shift+Z).
+- **Opslaan en openen** — als bestand op je eigen computer (Ctrl+S). Tussentijds
+  bewaart de editor automatisch, zodat een dichtgeklapte laptop niets kost.
+
+## Openen zonder iets te installeren
+
+Download `dist-singlefile/index.html` en open het met een dubbelklik. Alles zit
+in dat ene bestand: de fonts, het voorbeelddossier en het programma zelf. Er is
+geen internetverbinding en geen installatie nodig.
+
+## Zelf bouwen of doorontwikkelen
+
+Hiervoor is [Node.js](https://nodejs.org) 20 of nieuwer nodig.
+
+```bash
+npm install
+npm run dev          # editor op http://localhost:5173
+npm run build        # gewone site in dist/
+SINGLEFILE=1 npm run build   # één zelfstandig bestand in dist-singlefile/
+npm run typecheck    # controleert de types
+```
+
+Rooktest, die controleert of de kern nog werkt:
+
+```bash
+npm install --save-dev playwright
+node scripts/smoke.mjs                          # test dist-singlefile/index.html
+node scripts/smoke.mjs http://localhost:5173/   # test de draaiende editor
+```
+
+## Hoe het in elkaar zit
+
+Alles rust op één idee: een tijdlijn is een **document** — een lijst kaarten met
+datums, teksten, beeld en instellingen. De vormgeving zit niet vast in dat
+document maar wordt eroverheen gelegd. Daardoor kun je van vorm wisselen zonder
+iets opnieuw in te voeren, en blijft een gepubliceerde tijdlijn werken ook als
+de editor later wordt verbouwd.
+
+```
+src/
+  model/      het document en de regels eromheen
+    types.ts      hoe een tijdlijn en een kaart eruitzien
+    dates.ts      datums met wisselende nauwkeurigheid, sorteren en tonen
+    doc.ts        aanmaken, sorteren, inlezen van oudere bestanden
+    image.ts      foto's inlezen, verkleinen en waarschuwen
+    history.ts    ongedaan maken
+    storage.ts    opslaan, openen, tussentijds bewaren
+    contrast.ts   contrastcontrole volgens WCAG
+    demo.ts       het wolvendossier als testmateriaal
+  player/     wat de kijker ziet
+  ui/         wat de redacteur bedient
+  styles/     huisstijl-tokens, editor en speler
+```
+
+### Keuzes die uitleg verdienen
+
+**Foto's zitten in het document.** Er is geen koppeling met de beeldbank, dus
+een foto wordt als `data:`-URL in het bestand opgeslagen. Om te voorkomen dat
+dat onwerkbaar wordt, verkleint de editor bij het inplakken alles wat groter is
+dan 1920 pixels. Is een foto al kleiner, dan blijft hij onaangeroerd: opnieuw
+coderen zou alleen kwaliteit kosten.
+
+**Het scrollen blijft van de browser.** De duw-overgang wordt aangedreven door
+de scrollpositie, niet door het scrollen over te nemen. Dat houdt
+toetsenbordbediening, schermlezers en het gevoel van controle intact. Bij
+bezoekers die aangeven zo min mogelijk beweging te willen zien, gaat de
+overgang vanzelf uit.
+
+**Datums mogen onvolledig zijn.** `1953`, `maart 2024` en `29 oktober, 06:30`
+zijn alle drie geldig. Wat je invult is wat de kijker ziet. Vallen twee
+momenten op dezelfde dag — zoals de twee artikelen van 13 maart in het
+voorbeelddossier — dan krijgen ze allebei hun tijdstip erbij, zodat de as geen
+twee identieke stops toont.
+
+**Bijschrift en rechten zijn losse velden.** In de bron zaten ze aan elkaar
+geplakt (`…niet waarschijnlijk.© Oost / Ingestuurd`). Hier niet.
+
+## Het voorbeelddossier
+
+Onder de knop *Voorbeeld* zit het wolvendossier: zeven artikelen van RTV Oost
+tussen 13 maart en 2 juni 2025. Dat is **testmateriaal**, geen inhoud die bij de
+app hoort. Het staat erin om de editor te vullen met koppen van echte lengte,
+datums die samenvallen en foto's met echte rechtenvermeldingen. Wie een eigen
+tijdlijn begint, gooit het weg met *Nieuw*.
+
+## Nog niet gebouwd
+
+De vijf andere tijdlijnvormen (filmstrip, duo-cards, magazine, headlines,
+horizontaal), tekst met kleuraccenten en links, knoppen onder de tekst,
+aanwijzers op beeld, hoofdstukken, het inklappen van lege perioden, video en de
+embed-keten met meegroeiende hoogte.

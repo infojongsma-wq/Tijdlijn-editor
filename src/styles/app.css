@@ -1,0 +1,867 @@
+/* De editor-interface. Blijft bewust rustig en blauwgetint grijs: het
+   beeldmateriaal in de voorvertoning moet het werk doen, niet de omlijsting. */
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* ---------- bovenbalk ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--shell-header);
+  padding: 0 14px;
+  background: var(--ui-panel);
+  border-bottom: 1px solid var(--ui-line);
+  flex-shrink: 0;
+}
+
+/* Het logo is het woordmerk 'oost' in Roobert SemiBold, altijd blauw op wit. */
+.brand {
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--oost-blauw);
+  background: var(--oost-wit);
+  padding: 6px 12px 8px;
+  border-radius: 10px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+}
+
+.docname {
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--radius-input);
+  padding: 7px 10px;
+  font-size: 15px;
+  font-weight: 600;
+  min-width: 140px;
+  max-width: 320px;
+  flex: 1;
+}
+.docname:hover {
+  border-color: var(--ui-line);
+}
+.docname:focus {
+  border-color: var(--oost-blauw);
+  background: var(--ui-panel);
+  outline: none;
+}
+
+.topbar-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.topbar-right {
+  margin-left: auto;
+}
+
+/* ---------- knoppen ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--ui-line);
+  background: var(--ui-panel);
+  color: var(--ui-ink);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.btn:hover:not(:disabled) {
+  background: var(--ui-sunken);
+}
+.btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+/* De blauwe stip links van het label is het herkenningsteken van de
+   RTV Oost-knop. */
+.btn-primary {
+  background: var(--oost-blauw);
+  border-color: var(--oost-blauw);
+  color: var(--oost-wit);
+  font-weight: 600;
+}
+.btn-primary::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--oost-wit);
+  flex-shrink: 0;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #0d4fd6;
+}
+.btn-danger {
+  color: #b81c1c;
+  border-color: #f0cccc;
+}
+.btn-danger:hover:not(:disabled) {
+  background: #ffecec;
+}
+
+/* ---------- melding ---------- */
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 16px;
+  background: #fff7e7;
+  border-bottom: 1px solid #ffaf16;
+  color: #7a5000;
+  font-size: 14px;
+}
+.banner button {
+  margin-left: auto;
+  background: none;
+  border: 0;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+}
+
+/* ---------- werkvlak ---------- */
+
+.workspace {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 268px minmax(0, 1fr) 372px;
+}
+
+.panel {
+  background: var(--ui-panel);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.panel-left {
+  border-right: 1px solid var(--ui-line);
+}
+.panel-right {
+  border-left: 1px solid var(--ui-line);
+}
+.panel-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+.panel-empty {
+  color: var(--ui-ink-faint);
+  font-size: 14px;
+  padding: 8px 2px;
+}
+
+.panel-h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-ink-faint);
+}
+.panel-h3 {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-ink-faint);
+}
+
+/* ---------- kaartenlijst ---------- */
+
+.cardlist {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+.cardlist-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 16px 10px;
+}
+.cardlist-count {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ui-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.cardlist-items {
+  list-style: none;
+  margin: 0;
+  padding: 0 8px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+.cardlist-items li {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+.cli {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+}
+.cli:hover {
+  background: var(--ui-sunken);
+}
+.cli.is-selected {
+  background: var(--oost-lichtblauw);
+  border-color: #bcd2f5;
+}
+.cli-thumb {
+  width: 46px;
+  height: 34px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--ui-sunken);
+}
+.cli-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cli-thumb-empty {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--ui-sunken),
+    var(--ui-sunken) 5px,
+    var(--ui-line-soft) 5px,
+    var(--ui-line-soft) 10px
+  );
+}
+.cli-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cli-date {
+  display: flex;
+  gap: 7px;
+  align-items: baseline;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--oost-blauw);
+  letter-spacing: 0.02em;
+}
+.cli-type {
+  color: var(--ui-ink-faint);
+  font-weight: 500;
+  font-size: 10.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cli-title {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ui-ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cli-title em {
+  color: var(--ui-ink-faint);
+}
+.cli-del {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ui-ink-faint);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+}
+.cardlist-items li:hover .cli-del,
+.cli-del:focus-visible {
+  opacity: 1;
+}
+.cli-del:hover {
+  background: #ffecec;
+  color: #b81c1c;
+}
+.cardlist-empty {
+  padding: 4px 16px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ui-ink-faint);
+}
+.cardlist-foot {
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--ui-line-soft);
+}
+
+/* ---------- voorvertoning ---------- */
+
+.stage {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ui-ground);
+}
+.preview {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.preview-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  flex-shrink: 0;
+}
+.preview-hint {
+  font-size: 12.5px;
+  color: var(--ui-ink-faint);
+}
+.preview-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px 18px;
+}
+.preview-stage.is-desktop .preview-frame {
+  width: 100%;
+  height: 100%;
+}
+.preview-frame {
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  border: 1px solid var(--ui-line);
+  background: #000;
+  max-height: 100%;
+}
+
+/* ---------- formulier ---------- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.form-block {
+  border-top: 1px solid var(--ui-line-soft);
+  padding-top: 15px;
+}
+.form-h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-ink-faint);
+}
+
+.fld {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fld-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ui-ink-soft);
+}
+.fld-hint {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ui-ink-faint);
+}
+
+.inp {
+  width: 100%;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--radius-input);
+  padding: 8px 11px;
+  font-size: 14px;
+  background: var(--ui-panel);
+}
+.inp:focus {
+  border-color: var(--oost-blauw);
+  outline: none;
+}
+.inp-area {
+  resize: vertical;
+  line-height: 1.5;
+  min-height: 60px;
+}
+.inp-num {
+  width: 76px;
+  text-align: center;
+}
+.inp-select {
+  cursor: pointer;
+}
+
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.datumrij {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.datumrij-sep {
+  font-size: 12.5px;
+  color: var(--ui-ink-faint);
+  padding: 0 2px;
+}
+
+/* ---------- keuzerij ---------- */
+
+.seg {
+  display: inline-flex;
+  background: var(--ui-sunken);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+.seg-btn {
+  border: 0;
+  background: none;
+  padding: 6px 13px;
+  border-radius: var(--radius-pill);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--ui-ink-soft);
+  white-space: nowrap;
+}
+.seg-btn.is-on {
+  background: var(--ui-panel);
+  color: var(--ui-ink);
+  font-weight: 600;
+  box-shadow: 0 0 0 1px var(--ui-line);
+}
+
+/* ---------- schuifjes ---------- */
+
+.imgfield-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 12px 0;
+  border-top: 1px solid var(--ui-line-soft);
+  border-bottom: 1px solid var(--ui-line-soft);
+  margin: 4px 0 2px;
+}
+.sld-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+.sld-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ui-ink-soft);
+}
+.sld-value {
+  font-size: 12px;
+  color: var(--ui-ink-faint);
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+}
+.sld-reset {
+  border: 0;
+  background: none;
+  font-size: 11px;
+  color: var(--oost-blauw);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+.sld-reset:disabled {
+  color: var(--ui-ink-faint);
+  opacity: 0.5;
+  cursor: default;
+  text-decoration: none;
+}
+.sld input[type='range'] {
+  width: 100%;
+  accent-color: var(--oost-blauw);
+}
+
+/* ---------- schakelaars en kleuren ---------- */
+
+.tgl {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.tgl input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.tgl-box {
+  width: 34px;
+  height: 20px;
+  border-radius: var(--radius-pill);
+  background: var(--ui-line);
+  position: relative;
+  flex-shrink: 0;
+  transition: background-color 140ms ease;
+}
+.tgl-box::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--oost-wit);
+  transition: transform 140ms ease;
+}
+.tgl input:checked + .tgl-box {
+  background: var(--oost-blauw);
+}
+.tgl input:checked + .tgl-box::after {
+  transform: translateX(14px);
+}
+.tgl input:focus-visible + .tgl-box {
+  outline: 2px solid var(--oost-blauw);
+  outline-offset: 2px;
+}
+
+.clr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.clr input[type='color'] {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--ui-line);
+  border-radius: 7px;
+  padding: 2px;
+  background: var(--ui-panel);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.clr-label {
+  flex: 1;
+}
+.clr-hex {
+  font-size: 11.5px;
+  color: var(--ui-ink-faint);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* ---------- beeld ---------- */
+
+.imgdrop {
+  border: 1.5px dashed var(--ui-line);
+  border-radius: var(--radius-card);
+  padding: 26px 18px;
+  text-align: center;
+  background: var(--ui-sunken);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.imgdrop.is-busy {
+  opacity: 0.6;
+}
+.imgdrop-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.imgdrop-sub {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--ui-ink-faint);
+}
+
+.imgfield {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.focal {
+  position: relative;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background: var(--ui-sunken);
+  line-height: 0;
+}
+.focal.is-interactive {
+  cursor: crosshair;
+  touch-action: none;
+}
+.focal img {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 240px;
+  object-fit: contain;
+  user-select: none;
+}
+.focal-dot {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  border: 2px solid var(--oost-wit);
+  background: rgba(19, 97, 255, 0.55);
+  pointer-events: none;
+}
+.focal-mask {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(10, 14, 22, 0.62);
+  pointer-events: none;
+}
+.focal-cropline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 2px solid var(--oost-geel);
+  border-right: 2px solid var(--oost-geel);
+  pointer-events: none;
+}
+.focal-cropline span {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  line-height: 1.6;
+  white-space: nowrap;
+  background: var(--oost-geel);
+  color: #3d2600;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+}
+
+.imgfield-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.imgfield-info {
+  font-size: 11.5px;
+  color: var(--ui-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.imgfield-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.imgfield-actions .btn {
+  padding: 6px 12px;
+  font-size: 12.5px;
+}
+
+/* ---------- meldingen in panelen ---------- */
+
+.msg {
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: var(--radius-input);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.msg-info {
+  background: var(--oost-lichtblauw);
+  color: #1a3c74;
+}
+.msg-warn {
+  background: #fff7e7;
+  color: #7a5000;
+}
+.msg-error {
+  background: #ffecec;
+  color: #b81c1c;
+}
+
+/* ---------- tabbladen ---------- */
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 10px 12px 0;
+  border-bottom: 1px solid var(--ui-line);
+  flex-shrink: 0;
+}
+.tabs button {
+  border: 0;
+  background: none;
+  padding: 9px 13px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ui-ink-soft);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tabs button.is-on {
+  color: var(--oost-blauw);
+  font-weight: 600;
+  border-bottom-color: var(--oost-blauw);
+}
+
+/* ---------- instellingen ---------- */
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.settings-block {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.settings-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.settings-note {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ui-ink-faint);
+}
+.settings-presets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.vormgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.vormbtn {
+  position: relative;
+  border: 1px solid var(--ui-line);
+  background: var(--ui-panel);
+  border-radius: var(--radius-input);
+  padding: 11px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+}
+.vormbtn.is-on {
+  border-color: var(--oost-blauw);
+  background: var(--oost-lichtblauw);
+  color: var(--oost-blauw);
+  font-weight: 600;
+}
+.vormbtn.is-todo {
+  color: var(--ui-ink-faint);
+  cursor: not-allowed;
+  background: var(--ui-sunken);
+}
+.vormbtn-todo {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  margin-top: 2px;
+}
+
+/* ---------- smallere schermen ---------- */
+
+@media (max-width: 1180px) {
+  .workspace {
+    grid-template-columns: 224px minmax(0, 1fr) 320px;
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(320px, 1fr) auto;
+    overflow-y: auto;
+  }
+  .panel-left,
+  .panel-right {
+    border: 0;
+    border-top: 1px solid var(--ui-line);
+  }
+  .cardlist-items {
+    max-height: 260px;
+  }
+  .panel-scroll {
+    max-height: 60vh;
+  }
+}

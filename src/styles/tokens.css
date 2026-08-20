@@ -1,0 +1,121 @@
+/* RTV Oost huisstijl — kleuren en typografie.
+   Deze waarden zijn het vertrekpunt; per tijdlijn kun je ze in de editor
+   overschrijven. De editor-interface zelf blijft altijd in deze stijl. */
+
+@font-face {
+  font-family: 'Roobert';
+  src: url('../assets/fonts/Roobert-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Roobert';
+  src: url('../assets/fonts/Roobert-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Roobert';
+  src: url('../assets/fonts/Roobert-RegularItalic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Roobert';
+  src: url('../assets/fonts/Roobert-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Roobert';
+  src: url('../assets/fonts/Roobert-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Roobert';
+  src: url('../assets/fonts/Roobert-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --oost-blauw: #1361ff;
+  --oost-donkerblauw: #131720;
+  --oost-lichtblauw: #e7eef9;
+  --oost-paars: #8f00ff;
+  --oost-rood: #ff4242;
+  --oost-oranje: #ff6813;
+  --oost-geel: #ffaf16;
+  --oost-groen: #abbf3d;
+  --oost-creme: #f5f0e8;
+  --oost-wit: #ffffff;
+
+  /* Editor-interface: rustige, blauwgetinte grijzen zodat het beeldmateriaal
+     in de voorvertoning het werk doet en de omlijsting niet meevecht. */
+  --ui-ground: #f4f7fd;
+  --ui-panel: #ffffff;
+  --ui-sunken: #eef3fb;
+  --ui-line: #dbe4f3;
+  --ui-line-soft: #e9eff8;
+  --ui-ink: #131720;
+  --ui-ink-soft: #55617a;
+  --ui-ink-faint: #7b869d;
+
+  --radius-card: 12px;
+  --radius-input: 8px;
+  --radius-pill: 999px;
+
+  --font: 'Roobert', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+
+  --shell-header: 60px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--ui-ink);
+  background: var(--ui-ground);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--oost-blauw);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
