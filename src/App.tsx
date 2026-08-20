@@ -166,7 +166,7 @@ export function App() {
       }
       if (e.key.toLowerCase() === 's') {
         e.preventDefault()
-        saveToFile(doc)
+        void saveToFile(doc)
       }
     }
     window.addEventListener('keydown', opToets)
@@ -203,7 +203,7 @@ export function App() {
           </Button>
           <Button onClick={nieuw}>Nieuw</Button>
           <Button onClick={() => bestandRef.current?.click()}>Openen</Button>
-          <Button onClick={() => saveToFile(doc)} variant="primary" title="Ctrl+S">
+          <Button onClick={() => void saveToFile(doc)} variant="primary" title="Ctrl+S">
             Opslaan
           </Button>
           <input

@@ -73,14 +73,43 @@ export function clearAutosave(): void {
   }
 }
 
-export function saveToFile(doc: TimelineDoc): void {
-  const blob = new Blob([JSON.stringify(doc, null, 2)], {
-    type: 'application/json',
-  })
+/**
+ * Minimale beschrijving van de opslagbrug die sommige omgevingen aanbieden.
+ * We beschrijven alleen wat we gebruiken; een volledige typering hoort bij die
+ * omgeving, niet bij deze app.
+ */
+interface OpslagBrug {
+  use?: (naam: string) => Promise<{
+    save: (verzoek: { filename: string; data: string }) => Promise<unknown>
+  } | null>
+}
+
+export async function saveToFile(doc: TimelineDoc): Promise<void> {
+  const inhoud = JSON.stringify(doc, null, 2)
+  const naam = safeFileName(doc.name) + EXT
+
+  // Draait de editor in een omgeving die downloads zelf afhandelt — zoals een
+  // ingesloten voorvertoning — dan loopt het opslaan daarlangs. Een gewone
+  // downloadlink doet daar namelijk niets, en dan lijkt de knop stuk.
+  const brug = (globalThis as { claude?: OpslagBrug }).claude
+  if (typeof brug?.use === 'function') {
+    try {
+      const downloads = await brug.use('downloads')
+      if (downloads) {
+        await downloads.save({ filename: naam, data: inhoud })
+        return
+      }
+    } catch {
+      // Geweigerd of niet beschikbaar: hieronder gewoon de normale weg.
+      return
+    }
+  }
+
+  const blob = new Blob([inhoud], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = safeFileName(doc.name) + EXT
+  link.download = naam
   document.body.appendChild(link)
   link.click()
   link.remove()
