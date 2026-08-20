@@ -1229,3 +1229,45 @@
   flex: 1;
   min-height: 0;
 }
+
+/* ---------- aanwijzer-opties en picto's in de editor ---------- */
+
+.anitem-opties {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.anitem-picto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.anitem-picto .btn {
+  padding: 5px 11px;
+  font-size: 12px;
+}
+.anitem-picto-thumb {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: var(--ui-sunken);
+  border: 1px solid var(--ui-line);
+  flex-shrink: 0;
+}
+
+/* Een picto als versleepbaar anker in het voorbeeldkader. */
+.focal-an.is-icon {
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.5px solid var(--oost-wit);
+  object-fit: contain;
+  padding: 2px;
+}
+.focal-an.is-icon.is-active {
+  border-color: var(--oost-geel);
+  background: rgba(255, 247, 231, 0.95);
+}

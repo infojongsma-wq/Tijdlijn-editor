@@ -4,6 +4,7 @@ import {
   ACCEPTED,
   dataUrlBytes,
   formatBytes,
+  importIcon,
   importImage,
   type ImageWarning,
 } from '../model/image'
@@ -278,6 +279,28 @@ function Aanwijzers({
   onActief: (id: string | null) => void
   onWijzig: (a: Annotation[], label: string) => void
 }) {
+  const pictoRef = useRef<HTMLInputElement>(null)
+  const pictoVoor = useRef<string | null>(null)
+  const [pictoFout, setPictoFout] = useState<string | null>(null)
+
+  const kiesPicto = async (file: File | undefined) => {
+    const doel = pictoVoor.current
+    pictoVoor.current = null
+    if (!file || !doel) return
+    setPictoFout(null)
+    try {
+      const icon = await importIcon(file)
+      onWijzig(
+        annotations.map((x) => (x.id === doel ? { ...x, icon } : x)),
+        `aanwijzer-picto:${doel}`,
+      )
+    } catch (e) {
+      setPictoFout(e instanceof Error ? e.message : 'Deze picto kon niet worden geladen.')
+    } finally {
+      if (pictoRef.current) pictoRef.current.value = ''
+    }
+  }
+
   const voegToe = () => {
     const nieuw: Annotation = {
       id: newId(),
@@ -289,6 +312,8 @@ function Aanwijzers({
       by: 0.3,
       text: '',
       reveal: 'always',
+      line: true,
+      icon: null,
     }
     onActief(nieuw.id)
     onWijzig([...annotations, nieuw], 'aanwijzer-toevoegen')
@@ -341,22 +366,71 @@ function Aanwijzers({
                   ×
                 </button>
               </div>
-              <Toggle
-                label="Pas tonen bij aanwijzen"
-                checked={a.reveal === 'hover'}
-                onChange={(v) =>
-                  onWijzig(
-                    annotations.map((x) =>
-                      x.id === a.id ? { ...x, reveal: v ? 'hover' : 'always' } : x,
-                    ),
-                    `aanwijzer-tonen:${a.id}`,
-                  )
-                }
-              />
+              <div className="anitem-opties">
+                <Toggle
+                  label="Punt met verbindingslijn"
+                  checked={a.line}
+                  onChange={(v) =>
+                    onWijzig(
+                      annotations.map((x) => (x.id === a.id ? { ...x, line: v } : x)),
+                      `aanwijzer-lijn:${a.id}`,
+                    )
+                  }
+                />
+                {a.line && (
+                  <Toggle
+                    label="Pas tonen bij aanwijzen"
+                    checked={a.reveal === 'hover'}
+                    onChange={(v) =>
+                      onWijzig(
+                        annotations.map((x) =>
+                          x.id === a.id ? { ...x, reveal: v ? 'hover' : 'always' } : x,
+                        ),
+                        `aanwijzer-tonen:${a.id}`,
+                      )
+                    }
+                  />
+                )}
+                {a.line && (
+                  <div className="anitem-picto">
+                    {a.icon && <img src={a.icon} alt="" className="anitem-picto-thumb" />}
+                    <Button
+                      onClick={() => {
+                        pictoVoor.current = a.id
+                        pictoRef.current?.click()
+                      }}
+                      title="Vervangt de stip door een eigen afbeelding, bijvoorbeeld een pictogram"
+                    >
+                      {a.icon ? 'Andere picto…' : 'Eigen picto…'}
+                    </Button>
+                    {a.icon && (
+                      <Button
+                        onClick={() =>
+                          onWijzig(
+                            annotations.map((x) => (x.id === a.id ? { ...x, icon: null } : x)),
+                            `aanwijzer-picto:${a.id}`,
+                          )
+                        }
+                      >
+                        Stip terug
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
             </li>
           ))}
         </ol>
       )}
+
+      <input
+        ref={pictoRef}
+        type="file"
+        accept={ACCEPTED}
+        hidden
+        onChange={(e) => void kiesPicto(e.target.files?.[0])}
+      />
+      {pictoFout && <p className="msg msg-error">{pictoFout}</p>}
     </div>
   )
 }
@@ -514,29 +588,46 @@ function FocalPicker({
         />
       )}
 
-      {media.annotations.length > 0 && (
+      {media.annotations.some((a) => a.line) && (
         <svg className="focal-lijnen" aria-hidden="true">
-          {media.annotations.map((a) => (
-            <line
-              key={a.id}
-              x1={`${a.x * 100}%`}
-              y1={`${a.y * 100}%`}
-              x2={`${a.bx * 100}%`}
-              y2={`${a.by * 100}%`}
-            />
-          ))}
+          {media.annotations
+            .filter((a) => a.line)
+            .map((a) => (
+              <line
+                key={a.id}
+                x1={`${a.x * 100}%`}
+                y1={`${a.y * 100}%`}
+                x2={`${a.bx * 100}%`}
+                y2={`${a.by * 100}%`}
+              />
+            ))}
         </svg>
       )}
 
-      {media.annotations.map((a, i) => (
-        <span
-          key={a.id}
-          data-aanwijzer={a.id}
-          className={`focal-an ${a.id === actieveAanwijzer ? 'is-active' : ''}`}
-          style={{ left: `${a.x * 100}%`, top: `${a.y * 100}%` }}
-          title={`Anker van ballon ${i + 1} — sleep naar waar de lijn moet wijzen`}
-        />
-      ))}
+      {media.annotations
+        .filter((a) => a.line)
+        .map((a, i) =>
+          a.icon ? (
+            <img
+              key={a.id}
+              src={a.icon}
+              alt=""
+              data-aanwijzer={a.id}
+              className={`focal-an is-icon ${a.id === actieveAanwijzer ? 'is-active' : ''}`}
+              style={{ left: `${a.x * 100}%`, top: `${a.y * 100}%` }}
+              title={`Picto ${i + 1} — sleep naar waar hij moet staan`}
+              draggable={false}
+            />
+          ) : (
+            <span
+              key={a.id}
+              data-aanwijzer={a.id}
+              className={`focal-an ${a.id === actieveAanwijzer ? 'is-active' : ''}`}
+              style={{ left: `${a.x * 100}%`, top: `${a.y * 100}%` }}
+              title={`Anker van ballon ${i + 1} — sleep naar waar de lijn moet wijzen`}
+            />
+          ),
+        )}
 
       {media.annotations.map((a, i) => (
         <span

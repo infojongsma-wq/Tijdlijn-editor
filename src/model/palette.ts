@@ -85,6 +85,15 @@ export const RICH_KLEUREN: RichKleur[] = [
   })),
 ]
 
+/** Kleuren voor het kader achter een citaat: merkkleuren plus de nuances. */
+export const KADER_KLEUREN: Swatch[] = [
+  { naam: 'Donkerblauw', hex: OOST_DONKERBLAUW },
+  { naam: 'Wit', hex: OOST_WIT },
+  { naam: 'Crème', hex: OOST_CREME },
+  ...SECUNDAIR,
+  ...TINTEN,
+]
+
 export const TEKSTKLEUREN: Swatch[] = [
   { naam: 'Wit', hex: OOST_WIT },
   { naam: 'Donkerblauw', hex: OOST_DONKERBLAUW },

@@ -36,6 +36,8 @@ export function emptyCard(type: CardType = 'image-text'): Card {
     media: null,
     quoteAttribution: '',
     subtitle: '',
+    quoteFrame: false,
+    quoteFrameColor: '#F5F0E8',
     textPlacement: 'over',
     source: '',
   }
@@ -145,6 +147,11 @@ function normaliseCard(raw: unknown): Card {
     ...basis,
     ...input,
     id: input.id ?? basis.id,
+    quoteFrame: input.quoteFrame === true,
+    quoteFrameColor:
+      typeof input.quoteFrameColor === 'string' && /^#[0-9a-f]{6}$/i.test(input.quoteFrameColor)
+        ? input.quoteFrameColor
+        : basis.quoteFrameColor,
     date: normaliseDate(input.date) ?? basis.date,
     // Oudere bestanden bewaarden de tekst zonder opmaak; die wordt hier omgezet
     // zodat er niets verloren gaat en er niets ongefilterds binnenkomt.
@@ -178,6 +185,10 @@ function normaliseAnnotations(raw: unknown): Annotation[] {
         by: typeof a.by === 'number' ? klem(a.by) : y,
         text: typeof a.text === 'string' ? a.text : '',
         reveal: a.reveal === 'hover' ? 'hover' : 'always',
+        line: a.line !== false,
+        // Alleen ingebedde afbeeldingen; een pad of webadres uit een bewerkt
+        // bestand hoort hier niet doorheen te komen.
+        icon: typeof a.icon === 'string' && a.icon.startsWith('data:image/') ? a.icon : null,
       },
     ]
   })

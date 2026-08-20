@@ -35,15 +35,20 @@ const uitkomst = {
   roobertGeladen: await page.evaluate(() => document.fonts.check('700 40px Roobert')),
 }
 
-// Duw-overgang: halverwege moeten er twee kaarten tegelijk in beeld zijn.
+// Snapping: een scrollpositie halverwege twee kaarten mag niet blijven staan;
+// de browser hoort meteen op een hele kaart te landen, met precies één kaart
+// in beeld. (Tijdens het slepen zelf zijn er twee zichtbaar — de duw-overgang —
+// maar een rusttoestand tussen kaarten in bestaat niet meer.)
 const scroller = page.locator('.vp-scroller')
 await scroller.evaluate((el) => {
   el.scrollTop = el.clientHeight * 1.5
 })
-await page.waitForTimeout(400)
-uitkomst.zichtbaarTijdensOvergang = await page
-  .locator('.vp-slide.is-visible')
-  .count()
+await page.waitForTimeout(900)
+uitkomst.rustNaSnap = await scroller.evaluate((el) => {
+  const mod = el.scrollTop % el.clientHeight
+  return Math.min(mod, el.clientHeight - mod) < 2
+})
+uitkomst.zichtbaarInRust = await page.locator('.vp-slide.is-visible').count()
 
 console.log(JSON.stringify(uitkomst, null, 2))
 console.log('fouten:', fouten.length ? fouten : 'geen')
@@ -52,7 +57,8 @@ const goed =
   uitkomst.kaarten === 8 &&
   uitkomst.asStops === 7 &&
   uitkomst.roobertGeladen &&
-  uitkomst.zichtbaarTijdensOvergang === 2 &&
+  uitkomst.rustNaSnap === true &&
+  uitkomst.zichtbaarInRust === 1 &&
   fouten.length === 0
 
 await browser.close()

@@ -26,6 +26,17 @@
   overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-width: none;
+  /* Loslaten = op een hele kaart landen. Voorkomt dat het verhaal halverwege
+     twee kaarten blijft hangen, met afgekapte koppen en tekst op halve pixels
+     (wazige letters en cijfers) als gevolg. */
+  scroll-snap-type: y mandatory;
+}
+.vp-snap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  scroll-snap-align: start;
+  pointer-events: none;
 }
 .vp-scroller::-webkit-scrollbar {
   display: none;
@@ -80,8 +91,11 @@
   inset: 0;
   overflow: hidden;
 }
-.pc-bleed img,
-.pc-framed img {
+/* Alleen de foto zelf (het directe kind) — niet de picto's en ballonnen in de
+   aanwijzerlaag, anders wint deze regel qua specificiteit en wordt een picto
+   opgerekt tot het hele beeldvlak. */
+.pc-bleed > img,
+.pc-framed > img {
   width: 100%;
   height: 100%;
   display: block;
@@ -102,10 +116,18 @@
   flex-shrink: 0;
 }
 .pc-imagetext.is-below .pc-framed {
-  height: 46%;
+  /* De foto vult wat de tekst overlaat: korte tekst = groot beeld. */
+  height: auto;
+  flex: 1 1 46%;
+  min-height: 28%;
   width: 100%;
 }
-.pc-imagetext.is-below .pc-inner,
+.pc-imagetext.is-below .pc-inner {
+  flex: 0 1 auto;
+  min-height: 0;
+  align-self: center;
+  width: 100%;
+}
 .pc-imagetext.is-beside .pc-inner {
   flex: 1;
   min-height: 0;
@@ -168,13 +190,11 @@
   position: relative;
   padding: clamp(20px, 4cqi, 60px);
   max-width: 72ch;
-  /* Een kop van negentig tekens met vier regels tekst past niet altijd op een
-     telefoon. Liever een eigen scrollbalkje dan afgekapte inhoud. Maar géén
-     overscroll-behavior: contain — op een element dat niets te scrollen heeft
-     slikt dat het muiswiel in, en dan lijkt de hele tijdlijn vast te zitten
-     zodra de muis boven de tekst staat. */
+  /* De lezer scrolt alleen door het verhaal, nooit binnen een kaart — dus
+     geen eigen scrollbalkje. Past de inhoud niet, dan verkleint --fit de
+     tekst stap voor stap tot hij past (zie Inner in CardView). */
   max-height: 100%;
-  overflow-y: auto;
+  overflow: hidden;
 }
 .pc-center {
   margin: auto;
@@ -207,7 +227,7 @@
 
 .pc-h1 {
   margin: 0 0 18px;
-  font-size: clamp(30px, 6cqi, 68px);
+  font-size: calc(clamp(30px, 6cqi, 68px) * var(--fit, 1));
   line-height: 1.04;
   letter-spacing: -0.028em;
   font-weight: 700;
@@ -215,7 +235,7 @@
 }
 .pc-h2 {
   margin: 0 0 14px;
-  font-size: clamp(21px, 3.4cqi, 40px);
+  font-size: calc(clamp(21px, 3.4cqi, 40px) * var(--fit, 1));
   line-height: 1.12;
   letter-spacing: -0.018em;
   font-weight: 700;
@@ -223,7 +243,7 @@
 }
 .pc-h3 {
   margin: 0 0 16px;
-  font-size: clamp(18px, 2.4cqi, 28px);
+  font-size: calc(clamp(18px, 2.4cqi, 28px) * var(--fit, 1));
   line-height: 1.2;
   letter-spacing: -0.012em;
   font-weight: 600;
@@ -232,20 +252,20 @@
 
 .pc-standfirst {
   margin: 0 0 22px;
-  font-size: clamp(15px, 1.9cqi, 21px);
+  font-size: calc(clamp(15px, 1.9cqi, 21px) * var(--fit, 1));
   line-height: 1.5;
   opacity: 0.88;
 }
 
 .pc-body {
   margin: 0;
-  font-size: clamp(14px, 1.6cqi, 18px);
+  font-size: calc(clamp(14px, 1.6cqi, 18px) * var(--fit, 1));
   line-height: 1.6;
   opacity: 0.92;
   max-width: 62ch;
 }
 .pc-body-lead {
-  font-size: clamp(16px, 2cqi, 22px);
+  font-size: calc(clamp(16px, 2cqi, 22px) * var(--fit, 1));
   line-height: 1.55;
 }
 
@@ -279,7 +299,7 @@
 .pc-quotetext {
   position: relative;
   margin: 0;
-  font-size: clamp(20px, 3.2cqi, 38px);
+  font-size: calc(clamp(20px, 3.2cqi, 38px) * var(--fit, 1));
   line-height: 1.28;
   letter-spacing: -0.014em;
   font-weight: 500;
@@ -353,16 +373,16 @@
   z-index: -1;
 }
 .ax-left::before {
-  background: linear-gradient(to right, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0));
+  background: linear-gradient(to right, var(--ax-veil-1, rgba(0, 0, 0, 0.42)), var(--ax-veil-0, rgba(0, 0, 0, 0)));
 }
 .ax-right::before {
-  background: linear-gradient(to left, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0));
+  background: linear-gradient(to left, var(--ax-veil-1, rgba(0, 0, 0, 0.42)), var(--ax-veil-0, rgba(0, 0, 0, 0)));
 }
 .ax-top::before {
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0));
+  background: linear-gradient(to bottom, var(--ax-veil-1, rgba(0, 0, 0, 0.42)), var(--ax-veil-0, rgba(0, 0, 0, 0)));
 }
 .ax-bottom::before {
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0));
+  background: linear-gradient(to top, var(--ax-veil-1, rgba(0, 0, 0, 0.42)), var(--ax-veil-0, rgba(0, 0, 0, 0)));
 }
 
 .ax-left,
@@ -539,11 +559,13 @@
 }
 
 .ax-label {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
   white-space: nowrap;
   transition: opacity 160ms ease;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+  /* Schaduw in de themakleur: op donker een donkere gloed, op licht een
+     lichte — een zwarte schaduw maakte de datums op een licht thema wazig. */
+  text-shadow: 0 1px 5px var(--ax-shadow, rgba(0, 0, 0, 0.45));
 }
 .ax-stop.is-active .ax-label {
   font-weight: 600;
@@ -643,7 +665,7 @@
   min-height: 0;
   display: flex;
 }
-.pc-mediabox img {
+.pc-mediabox > img {
   width: 100%;
   height: 100%;
   max-height: 100%;
@@ -773,3 +795,23 @@
 .pc-quotetext [data-kleur='zachtgeel'] { color: #fff7e7; }
 .pc-body [data-kleur='zachtgroen'],
 .pc-quotetext [data-kleur='zachtgroen'] { color: #f5f7ec; }
+
+.pc-quotepanel {
+  border-radius: 16px;
+  padding: clamp(18px, 3.4cqi, 40px);
+}
+
+/* Eigen picto in plaats van de standaardstip. */
+.an-icoon {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  margin: -19px 0 0 -19px;
+  object-fit: contain;
+  pointer-events: auto;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.35));
+}
+.an .an-icoon:focus-visible {
+  outline: none;
+  filter: drop-shadow(0 0 0 3px rgba(255, 255, 255, 0.7));
+}

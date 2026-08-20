@@ -163,6 +163,34 @@ function close(bitmap: ImageBitmap | HTMLImageElement): void {
   if ('close' in bitmap && typeof bitmap.close === 'function') bitmap.close()
 }
 
+/** Kleine picto's voor op een punt. Groter dan dit heeft op een marker van
+ *  ~36 pixels geen zin en maakt het bestand alleen zwaarder. */
+const ICON_EDGE = 128
+
+export async function importIcon(file: File): Promise<string> {
+  if (file.type === 'image/svg+xml') return readAsDataUrl(file)
+  const bron = await readAsDataUrl(file)
+  const bitmap = await loadBitmap(bron)
+  const breedte = bitmap.width
+  const hoogte = bitmap.height
+  const langste = Math.max(breedte, hoogte)
+  if (langste <= ICON_EDGE) {
+    close(bitmap)
+    return bron
+  }
+  const schaal = ICON_EDGE / langste
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.round(breedte * schaal)
+  canvas.height = Math.round(hoogte * schaal)
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('De browser kan deze picto niet verwerken.')
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+  close(bitmap)
+  // Altijd PNG: een picto heeft vaak een doorzichtige achtergrond.
+  return canvas.toDataURL('image/png')
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`

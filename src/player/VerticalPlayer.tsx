@@ -172,6 +172,12 @@ export function VerticalPlayer({
         ['--veil-2' as string]: rgba(theme.background, 0.6),
         ['--veil-3' as string]: rgba(theme.background, 0.12),
         ['--veil-4' as string]: rgba(theme.background, 0),
+        // De sluier onder de as en de schaduw achter de datums volgen dezelfde
+        // themakleur. Hard zwart maakte op een licht thema een grauwe veeg en
+        // wazige cijfers.
+        ['--ax-veil-1' as string]: rgba(theme.background, 0.55),
+        ['--ax-veil-0' as string]: rgba(theme.background, 0),
+        ['--ax-shadow' as string]: rgba(theme.background, 0.9),
       }}
     >
       <div
@@ -206,6 +212,20 @@ export function VerticalPlayer({
           style={{ height: hoogte * Math.max(0, aantal - 1) }}
           aria-hidden="true"
         />
+
+        {/* Snappunten: loslaten betekent altijd op een hele kaart landen.
+            Zonder deze markeringen kon de tijdlijn halverwege twee kaarten
+            tot stilstand komen — met een afgekapte kop en wazige tekst op
+            halve pixels als gevolg. */}
+        {hoogte > 0 &&
+          cards.map((kaart, i) => (
+            <div
+              key={kaart.id}
+              className="vp-snap"
+              style={{ top: i * hoogte, height: hoogte }}
+              aria-hidden="true"
+            />
+          ))}
       </div>
 
       <Axis

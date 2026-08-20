@@ -2,7 +2,8 @@ import type { Card, CardType, TextPlacement } from '../model/types'
 import { buildDate, precisionLabel } from '../model/dates'
 import { cardTypeLabel, typeUsesBody, typeUsesMedia } from '../model/doc'
 import { ImageField } from './ImageField'
-import { Field, NumberInput, Segmented, Select, TextArea, TextInput } from './controls'
+import { Field, NumberInput, Segmented, Select, TextArea, TextInput, Toggle } from './controls'
+import { KADER_KLEUREN } from '../model/palette'
 import { RichText } from './RichText'
 
 interface Props {
@@ -143,6 +144,38 @@ export function CardForm({ card, onChange }: Props) {
             placeholder="Daniel Tuitert, jurist uit Zwolle"
             onChange={(v) => onChange({ quoteAttribution: v }, 'bron-citaat')}
           />
+        </Field>
+      )}
+
+      {card.type === 'quote' && (
+        <Field
+          group
+          label="Foto en leesbaarheid"
+          hint="Kader uit: de foto wordt gedimd zodat de tekst leesbaar blijft. Kader aan: de foto blijft vol in kleur en het citaat krijgt een eigen vlak."
+        >
+          <Toggle
+            label="Citaat in een gekleurd kader"
+            checked={card.quoteFrame}
+            onChange={(v) => onChange({ quoteFrame: v })}
+          />
+          {card.quoteFrame && (
+            <div className="stalen">
+              {KADER_KLEUREN.map((k) => (
+                <button
+                  key={k.hex}
+                  type="button"
+                  className={`staal ${
+                    k.hex.toLowerCase() === card.quoteFrameColor.toLowerCase() ? 'is-on' : ''
+                  }`}
+                  style={{ background: k.hex }}
+                  onClick={() => onChange({ quoteFrameColor: k.hex })}
+                  title={`${k.naam} · ${k.hex}`}
+                  aria-label={k.naam}
+                  aria-pressed={k.hex.toLowerCase() === card.quoteFrameColor.toLowerCase()}
+                />
+              ))}
+            </div>
+          )}
         </Field>
       )}
 

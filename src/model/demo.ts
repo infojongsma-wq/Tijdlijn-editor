@@ -34,6 +34,8 @@ interface Bron {
   textPlacement?: Card['textPlacement']
   source?: string
   annotations?: Annotation[]
+  quoteFrame?: boolean
+  quoteFrameColor?: string
 }
 
 const BRONNEN: Bron[] = [
@@ -81,8 +83,8 @@ const BRONNEN: Bron[] = [
     textPlacement: 'below',
     source: 'RTV Oost',
     annotations: [
-      { id: 'demo-wolf', x: 0.34, y: 0.5, bx: 0.5, by: 0.24, text: 'De wolf, gefilmd door een omwonende', reveal: 'always' },
-      { id: 'demo-n347', x: 0.68, y: 0.52, bx: 0.52, by: 0.78, text: 'De N347, waar het dier zou zijn doodgereden', reveal: 'hover' },
+      { id: 'demo-wolf', x: 0.34, y: 0.5, bx: 0.5, by: 0.24, text: 'De wolf, gefilmd door een omwonende', reveal: 'always', line: true, icon: null },
+      { id: 'demo-n347', x: 0.68, y: 0.52, bx: 0.52, by: 0.78, text: 'De N347, waar het dier zou zijn doodgereden', reveal: 'hover', line: true, icon: null },
     ],
   },
   {
@@ -111,6 +113,8 @@ const BRONNEN: Bron[] = [
       'Ook als de beschermingsstatus omlaaggaat, blijft de wolf een beschermde diersoort. Afschot ' +
       'blijft gebonden aan strenge voorwaarden en aan een aantoonbaar probleem.',
     quoteAttribution: 'Daniel Tuitert, jurist en wolvenvrijwilliger uit Zwolle',
+    quoteFrame: true,
+    quoteFrameColor: '#F5F0E8',
     image: beschermd,
     alt: 'Een wolf loopt langs een omheining.',
     credit: 'Getty Images',
@@ -181,6 +185,8 @@ function toCard(bron: Bron): Card {
     body: bron.body,
     subtitle: bron.subtitle ?? '',
     quoteAttribution: bron.quoteAttribution ?? '',
+    quoteFrame: bron.quoteFrame ?? false,
+    quoteFrameColor: bron.quoteFrameColor ?? '#F5F0E8',
     textPlacement: bron.textPlacement ?? 'over',
     source: bron.source ?? '',
     media: bron.image

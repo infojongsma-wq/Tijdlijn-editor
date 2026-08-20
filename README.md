@@ -17,16 +17,24 @@ publiceren.
   donkerblauw om terug te keren naar gewoon, de zes merkkleuren, en de zes
   zachte tinten uit de huisstijl als nuance. Geplakte tekst uit Word komt
   binnen als kale tekst.
-- **Tekstballonnen met een verbindingslijn** — anker én ballon sleep je elk
-  vrij naar hun plek; de lijn ertussen tekent zichzelf. Meteen zichtbaar of pas
-  bij aanwijzen. Beide posities staan in fracties, dus het klopt op elk
+- **Aanwijzers op het beeld, in drie smaken** — een punt met lijn en
+  tekstballon; alleen een punt (of een eigen geüploade picto) als markering;
+  of een los tekstblok zonder punt en lijn. Anker en ballon sleep je elk vrij
+  naar hun plek. Alle posities staan in fracties, dus alles klopt op elk
   schermformaat. Ditzelfde mechanisme dient straks voor een aanklikbare kaart
   van Overijssel en voor toelichtingen op een grafiek.
 - **Beeld bijstellen** — brandpunt slepen, inzoomen, doorzichtigheid,
   belichting, contrast en verzadiging. De foto zelf wordt daarbij nooit
   aangeraakt; alleen de instellingen worden bewaard.
 - **Verticaal scrollen met duw-overgang** — de kaarten duwen elkaar omhoog,
-  zoals de overgang 'duwen' in PowerPoint.
+  zoals de overgang 'duwen' in PowerPoint. Loslaten betekent altijd op een
+  hele kaart landen; het verhaal blijft nooit tussen twee kaarten in hangen.
+- **Citaat met of zonder kader** — standaard wordt de foto gedimd om de tekst
+  leesbaar te houden; zet je het kader aan, dan blijft de foto vol in kleur en
+  krijgt het citaat een eigen vlak in een huisstijlkleur naar keuze.
+- **Tekst past altijd** — de lezer scrolt alleen door het verhaal, nooit
+  binnen een kaart. Past de inhoud niet, dan wordt de tekst stapsgewijs iets
+  verkleind tot hij past, met een ondergrens.
 - **De as** — links, rechts, boven, onder of verborgen. Aanklikbaar, met
   voortgangsbalk en teller.
 - **Kleuren uit de huisstijl** — geen vrije kleurkiezer maar een staalkaart met

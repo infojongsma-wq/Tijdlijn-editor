@@ -89,6 +89,10 @@ export interface Annotation {
   text: string
   /** Meteen zichtbaar, of pas bij aanwijzen en aantikken. */
   reveal: 'always' | 'hover'
+  /** Punt en verbindingslijn tonen. Uit = een los tekstblok op het beeld. */
+  line: boolean
+  /** Eigen picto (data-URL) in plaats van de standaardstip. */
+  icon: string | null
 }
 
 export interface Media {
@@ -120,6 +124,10 @@ export interface Card {
   quoteAttribution: string
   /** Ondertitel, alleen bij de titelkaart. */
   subtitle: string
+  /** Citaat: tekst in een gekleurd kader, zodat de foto vol in kleur blijft.
+   *  Uit = de foto wordt gedimd om de tekst leesbaar te houden. */
+  quoteFrame: boolean
+  quoteFrameColor: string
   textPlacement: TextPlacement
   /** Herkomst van dit moment. Journalistiek onmisbaar, ook als het niet getoond wordt. */
   source: string

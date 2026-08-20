@@ -1,5 +1,5 @@
 import type { AxisPosition, Theme } from '../model/types'
-import { afgeleid } from '../model/palette'
+import { afgeleid, meng } from '../model/palette'
 
 interface Props {
   labels: string[]
@@ -31,6 +31,9 @@ export function Axis({
   const actief = Math.round(progress)
   const alleLabels = labels.length <= ALLE_LABELS_TOT
   const extra = afgeleid(theme)
+  // De gewone mix voor zachte tekst is voor deze kleine datums te vaag;
+  // de as krijgt een eigen, hardere mengverhouding.
+  const labelKleur = meng(theme.text, theme.background, 0.85)
   const fractie = labels.length > 1 ? progress / (labels.length - 1) : 0
 
   return (
@@ -76,7 +79,7 @@ export function Axis({
                   <span className="ax-dot" />
                   <span
                     className={`ax-label ${toonLabel ? '' : 'is-hidden'}`}
-                    style={{ color: isActief ? theme.text : extra.textMuted }}
+                    style={{ color: isActief ? theme.text : labelKleur }}
                   >
                     {label}
                   </span>
