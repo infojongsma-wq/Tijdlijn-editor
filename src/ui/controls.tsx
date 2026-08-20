@@ -5,19 +5,34 @@ import type { ReactNode } from 'react'
 export function Field({
   label,
   hint,
+  group,
   children,
 }: {
   label: string
   hint?: string
+  /** Zet dit aan als de inhoud géén enkel invoerveld is, maar een groep — een
+   *  rij keuzeknoppen of losse datumvakjes. Een <label> om knoppen heen zorgt
+   *  namelijk dat een klik op de labeltekst de eerste knop indrukt, en dan
+   *  verandert er ongemerkt een instelling. */
+  group?: boolean
   children: ReactNode
 }) {
-  return (
-    <label className="fld">
+  const inhoud = (
+    <>
       <span className="fld-label">{label}</span>
       {children}
       {hint && <span className="fld-hint">{hint}</span>}
-    </label>
+    </>
   )
+
+  if (group) {
+    return (
+      <div className="fld" role="group" aria-label={label}>
+        {inhoud}
+      </div>
+    )
+  }
+  return <label className="fld">{inhoud}</label>
 }
 
 export function TextInput({

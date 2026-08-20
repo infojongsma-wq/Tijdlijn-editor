@@ -57,6 +57,7 @@ export async function importImage(file: File): Promise<ImportResult> {
   const bitmap = await loadBitmap(bron)
   const megapixels = (bitmap.width * bitmap.height) / 1_000_000
 
+
   if (megapixels > WARN_MEGAPIXELS) {
     warnings.push({
       level: 'warn',
@@ -66,21 +67,25 @@ export async function importImage(file: File): Promise<ImportResult> {
     })
   }
 
-  const langsteZijde = Math.max(bitmap.width, bitmap.height)
+  // Vastleggen vóórdat de bitmap wordt gesloten: close() zet breedte en hoogte
+  // op nul, en dan meldt de editor "verkleind van 0×0".
+  const bronBreedte = bitmap.width
+  const bronHoogte = bitmap.height
+  const langsteZijde = Math.max(bronBreedte, bronHoogte)
 
   // Al klein genoeg? Dan de oorspronkelijke bytes houden. Opnieuw coderen zou
   // alleen maar kwaliteit kosten zonder iets op te leveren.
   if (langsteZijde <= MAX_EDGE) {
     close(bitmap)
     return {
-      media: makeMedia(bron, file.type, bitmap.width, bitmap.height),
+      media: makeMedia(bron, file.type, bronBreedte, bronHoogte),
       warnings,
     }
   }
 
   const schaal = MAX_EDGE / langsteZijde
-  const breedte = Math.round(bitmap.width * schaal)
-  const hoogte = Math.round(bitmap.height * schaal)
+  const breedte = Math.round(bronBreedte * schaal)
+  const hoogte = Math.round(bronHoogte * schaal)
 
   const canvas = document.createElement('canvas')
   canvas.width = breedte
@@ -97,7 +102,7 @@ export async function importImage(file: File): Promise<ImportResult> {
 
   warnings.push({
     level: 'info',
-    text: `Verkleind van ${bitmap.width}×${bitmap.height} naar ${breedte}×${hoogte}.`,
+    text: `Verkleind van ${bronBreedte}×${bronHoogte} naar ${breedte}×${hoogte}.`,
   })
 
   return { media: makeMedia(verkleind, doelType, breedte, hoogte), warnings }

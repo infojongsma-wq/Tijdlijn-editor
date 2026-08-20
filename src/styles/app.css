@@ -644,12 +644,17 @@
   gap: 11px;
 }
 
+/* De verhouding en de maximumbreedte komen uit ImageField: het kader krijgt
+   exact de verhouding van de foto, zodat er nooit lege ruimte naast staat en
+   een klik altijd op hetzelfde punt in de foto uitkomt. */
 .focal {
   position: relative;
   border-radius: var(--radius-card);
   overflow: hidden;
   background: var(--ui-sunken);
   line-height: 0;
+  width: 100%;
+  margin: 0 auto;
 }
 .focal.is-interactive {
   cursor: crosshair;
@@ -657,10 +662,9 @@
 }
 .focal img {
   width: 100%;
-  height: auto;
+  height: 100%;
   display: block;
-  max-height: 240px;
-  object-fit: contain;
+  object-fit: fill;
   user-select: none;
 }
 .focal-dot {

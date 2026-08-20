@@ -24,14 +24,41 @@ export function App() {
   const [tab, setTab] = useState<Tab>('moment')
   const [melding, setMelding] = useState<string | null>(null)
   const bestandRef = useRef<HTMLInputElement>(null)
+  // Eén melding over mislukt bewaren is genoeg; hem elke wijziging herhalen
+  // maakt de editor onbruikbaar.
+  const opslagGemeld = useRef(false)
+  const opruimen = useRef<(() => void) | null>(null)
 
-  // Tussentijds bewaren, maar niet bij elke toetsaanslag.
+  // Tussentijds bewaren, maar niet bij elke toetsaanslag: het document bevat de
+  // foto's als tekst, dus het omzetten kost bij een vol dossier al gauw een paar
+  // megabyte werk. Ruim wachten en het dan in een rustig moment doen houdt het
+  // typen soepel. Mislukt het, dan melden we het één keer en blijven we het niet
+  // elke ronde herhalen.
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const bewaar = () => {
       const resultaat = autosave(doc)
-      if (!resultaat.ok) setMelding(resultaat.reason)
-    }, 600)
-    return () => clearTimeout(timer)
+      if (resultaat.ok) {
+        opslagGemeld.current = false
+      } else if (!opslagGemeld.current) {
+        opslagGemeld.current = true
+        setMelding(resultaat.reason)
+      }
+    }
+
+    const timer = setTimeout(() => {
+      if (typeof requestIdleCallback === 'function') {
+        const idle = requestIdleCallback(bewaar, { timeout: 2000 })
+        opruimen.current = () => cancelIdleCallback(idle)
+      } else {
+        bewaar()
+      }
+    }, 1500)
+
+    return () => {
+      clearTimeout(timer)
+      opruimen.current?.()
+      opruimen.current = null
+    }
   }, [doc])
 
   const selected =
@@ -241,7 +268,10 @@ export function App() {
           <div className="panel-scroll">
             {tab === 'moment' ? (
               selected ? (
-                <CardForm card={selected} onChange={patchCard} />
+                // De sleutel dwingt een verse invulling af bij het wisselen van
+                // kaart. Zonder dat blijven meldingen over een foto van de vorige
+                // kaart staan bij de volgende.
+                <CardForm key={selected.id} card={selected} onChange={patchCard} />
               ) : (
                 <p className="panel-empty">
                   Kies links een moment, of voeg er een toe.

@@ -3,6 +3,7 @@ import {
   DEFAULT_ADJUST,
   type Card,
   type CardType,
+  type PartialDate,
   type Settings,
   type Theme,
   type TimelineDoc,
@@ -12,7 +13,6 @@ import { buildDate, sortKey } from './dates'
 /** RTV Oost-huisstijl als vertrekpunt. Alles hierin is aanpasbaar in de editor. */
 export const OOST_THEME: Theme = {
   background: '#131720', // Oost Donkerblauw
-  surface: '#FFFFFF',
   text: '#FFFFFF',
   textMuted: '#B9C2D4',
   accent: '#1361FF', // Oost Blauw
@@ -22,7 +22,6 @@ export const OOST_THEME: Theme = {
 
 export const OOST_THEME_LIGHT: Theme = {
   background: '#FFFFFF',
-  surface: '#E7EEF9', // Oost Lichtblauw
   text: '#131720',
   textMuted: '#4A5468',
   accent: '#1361FF',
@@ -160,7 +159,33 @@ function normaliseCard(raw: unknown): Card {
     ...basis,
     ...input,
     id: input.id ?? basis.id,
-    date: input.date ?? basis.date,
+    date: normaliseDate(input.date) ?? basis.date,
     media,
   }
+}
+
+/**
+ * Een datum uit een bestand kan van alles zijn: een ouder formaat, handmatig
+ * aangepast, of half ingevuld. Hier gaat hij door dezelfde molen als
+ * gebruikersinvoer, zodat de speler nooit "undefined januari" toont en sortKey
+ * nooit NaN oplevert.
+ */
+function normaliseDate(raw: unknown): PartialDate | null {
+  if (!raw || typeof raw !== 'object') return null
+  const d = raw as Partial<PartialDate>
+  if (typeof d.year !== 'number' || !Number.isFinite(d.year)) return null
+
+  // De precisie in het bestand mag niet meer beloven dan de velden waarmaken:
+  // 'minute' zonder uur wordt teruggebracht tot wat er wél staat.
+  const heeftMaand = typeof d.month === 'number' && Number.isFinite(d.month)
+  const heeftDag = heeftMaand && typeof d.day === 'number' && Number.isFinite(d.day)
+  const heeftTijd = heeftDag && typeof d.hour === 'number' && Number.isFinite(d.hour)
+
+  return buildDate(
+    d.year,
+    heeftMaand ? d.month : undefined,
+    heeftDag ? d.day : undefined,
+    heeftTijd ? d.hour : undefined,
+    heeftTijd && typeof d.minute === 'number' ? d.minute : undefined,
+  )
 }

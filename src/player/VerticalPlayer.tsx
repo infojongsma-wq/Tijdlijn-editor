@@ -131,8 +131,13 @@ export function VerticalPlayer({
   )
 
   const huidig = Math.round(progress)
-  // De as telt alleen kaarten met een datum; de titelkaart hoort daar niet bij.
-  const asPositie = axisIndex[Math.min(huidig, aantal - 1)] ?? 0
+
+  // De as telt alleen kaarten met een datum; de titelkaart heeft geen stop en
+  // staat als -1 in de lijst. Voor de balk rekenen we de doorlopende
+  // kaartpositie om naar een doorlopende aspositie, zodat de balk meeloopt met
+  // de duw-overgang in plaats van te verspringen. Kaarten zonder stop lenen de
+  // stop van de eerstvolgende kaart die er wel een heeft.
+  const asPositie = asPositieVoor(progress, axisIndex)
 
   return (
     <div
@@ -180,11 +185,43 @@ export function VerticalPlayer({
         theme={theme}
         showProgress={settings.showProgress}
         showCounter={settings.showCounter}
-        onJump={(asIndex) => {
-          const kaart = axisIndex.findIndex((v) => v === asIndex)
+        onJump={(stop) => {
+          // Zoeken in de ruwe lijst: de titelkaart staat daar als -1 en kan dus
+          // niet per ongeluk als eerste stop worden aangewezen.
+          const kaart = axisIndex.indexOf(stop)
           if (kaart >= 0) springNaar(kaart)
         }}
       />
     </div>
   )
+}
+
+/**
+ * Doorlopende positie op de as, afgeleid van de doorlopende kaartpositie.
+ *
+ * Kaarten zonder eigen stop (de titelkaart) staan als -1 in de lijst; die
+ * lenen de stop van de eerstvolgende kaart die er wel een heeft, of anders van
+ * de vorige. Tussen twee kaarten wordt lineair gemengd, zodat de voortgangsbalk
+ * meeschuift met de duw-overgang.
+ */
+function asPositieVoor(progress: number, axisIndex: number[]): number {
+  if (axisIndex.length === 0) return 0
+
+  const stopVan = (i: number): number => {
+    const geklemd = Math.min(axisIndex.length - 1, Math.max(0, i))
+    if (axisIndex[geklemd] >= 0) return axisIndex[geklemd]
+    for (let j = geklemd + 1; j < axisIndex.length; j++) {
+      if (axisIndex[j] >= 0) return axisIndex[j]
+    }
+    for (let j = geklemd - 1; j >= 0; j--) {
+      if (axisIndex[j] >= 0) return axisIndex[j]
+    }
+    return 0
+  }
+
+  const onder = Math.floor(progress)
+  const fractie = progress - onder
+  const a = stopVan(onder)
+  const b = stopVan(onder + 1)
+  return a + (b - a) * Math.min(1, Math.max(0, fractie))
 }

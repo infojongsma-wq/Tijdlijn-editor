@@ -60,7 +60,7 @@ export function SettingsPanel({ settings, theme, onSettings, onTheme }: Props) {
       <section className="settings-block">
         <h3 className="panel-h3">Navigatie</h3>
 
-        <Field label="Waar staat de tijdlijn">
+        <Field group label="Waar staat de tijdlijn">
           <Segmented
             label="Positie van de as"
             value={settings.axis}
@@ -69,7 +69,7 @@ export function SettingsPanel({ settings, theme, onSettings, onTheme }: Props) {
           />
         </Field>
 
-        <Field label="Richting">
+        <Field group label="Richting">
           <Segmented
             label="Sorteerrichting"
             value={settings.direction}

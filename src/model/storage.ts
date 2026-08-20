@@ -16,14 +16,43 @@ export function autosave(doc: TimelineDoc): { ok: true } | { ok: false; reason: 
   try {
     localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(doc))
     return { ok: true }
-  } catch {
-    return {
-      ok: false,
-      reason:
-        'Tussentijds bewaren lukt niet meer: de tijdlijn is te groot voor het ' +
-        'geheugen van de browser. Sla op als bestand om je werk veilig te stellen.',
-    }
+  } catch (e) {
+    return { ok: false, reason: verklaarOpslagfout(e) }
   }
+}
+
+/**
+ * Er zijn twee heel verschillende redenen waarom tussentijds bewaren mislukt,
+ * en ze vragen om ander advies. Ze op één hoop gooien leverde de verwarrende
+ * melding "de tijdlijn is te groot" op bij een nog lege tijdlijn.
+ */
+function verklaarOpslagfout(e: unknown): string {
+  const vol =
+    e instanceof DOMException &&
+    (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')
+
+  if (vol) {
+    return (
+      'Tussentijds bewaren lukt niet meer: de tijdlijn is te groot voor het ' +
+      'geheugen van de browser. Sla op als bestand om je werk veilig te stellen.'
+    )
+  }
+
+  // Een los HTML-bestand dat je met een dubbelklik opent, draait op file:// —
+  // en daar houdt de browser de opslag dicht. Alles werkt gewoon, alleen het
+  // automatisch bewaren niet.
+  if (location.protocol === 'file:') {
+    return (
+      'Automatisch bewaren werkt niet als je dit bestand rechtstreeks van je ' +
+      'schijf opent. Alles werkt verder normaal — sla tussendoor zelf op met ' +
+      'Ctrl+S, dan raak je niets kwijt.'
+    )
+  }
+
+  return (
+    'Automatisch bewaren lukt niet in deze browser. Sla tussendoor zelf op ' +
+    'met Ctrl+S.'
+  )
 }
 
 export function loadAutosave(): TimelineDoc | null {

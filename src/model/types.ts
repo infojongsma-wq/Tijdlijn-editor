@@ -112,7 +112,6 @@ export type SortDirection = 'asc' | 'desc'
 
 export interface Theme {
   background: string
-  surface: string
   text: string
   textMuted: string
   accent: string

@@ -43,6 +43,7 @@ export function CardForm({ card, onChange }: Props) {
 
       {!isTitel && (
         <Field
+          group
           label="Datum"
           hint={`Laat velden leeg voor een globalere datum — nu: ${precisionLabel(date.precision)}. De volgorde volgt hieruit.`}
         >
@@ -140,7 +141,7 @@ export function CardForm({ card, onChange }: Props) {
       )}
 
       {card.type === 'image-text' && card.media && (
-        <Field label="Plek van de tekst">
+        <Field group label="Plek van de tekst">
           <Segmented
             label="Plek van de tekst"
             value={card.textPlacement}

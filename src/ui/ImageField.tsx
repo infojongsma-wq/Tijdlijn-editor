@@ -20,6 +20,9 @@ interface Props {
 /** Verhouding van een staand telefoonscherm, voor de uitsnede-hulplijn. */
 const MOBIEL = 9 / 16
 
+/** Hoogte waarop het voorbeeldkader wordt afgetopt. */
+const MAX_PREVIEW_HOOGTE = 240
+
 export function ImageField({ media, onChange, cropped }: Props) {
   const [bezig, setBezig] = useState(false)
   const [meldingen, setMeldingen] = useState<ImageWarning[]>([])
@@ -285,6 +288,14 @@ function FocalPicker({
   }
 
   const beeldVerhouding = media.width && media.height ? media.width / media.height : 16 / 9
+
+  // Het kader krijgt exact de verhouding van de foto. Anders staat er bij een
+  // staande foto zwart naast het beeld, en klopt de omrekening van muispositie
+  // naar brandpunt niet meer: je klikt dan naast de foto en het punt springt.
+  const kaderStijl = {
+    aspectRatio: `${beeldVerhouding}`,
+    maxWidth: `${Math.round(MAX_PREVIEW_HOOGTE * beeldVerhouding)}px`,
+  }
   // Bij 'cover' op een staand scherm blijft hiervan horizontaal maar een strook over.
   const strookBreedte = Math.min(1, MOBIEL / beeldVerhouding)
   const strookLinks = Math.min(
@@ -299,6 +310,7 @@ function FocalPicker({
       onPointerDown={opPointerDown}
       onPointerMove={opPointerMove}
       onKeyDown={opToets}
+      style={kaderStijl}
       tabIndex={interactief ? 0 : -1}
       role={interactief ? 'application' : undefined}
       aria-label={

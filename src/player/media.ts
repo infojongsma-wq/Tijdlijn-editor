@@ -26,6 +26,10 @@ export function mediaStyle(media: Media, fit: 'cover' | 'contain'): CSSPropertie
         ? `${adjust.focalX * 100}% ${adjust.focalY * 100}%`
         : 'center',
     transform: fit === 'cover' && adjust.zoom !== 1 ? `scale(${adjust.zoom})` : undefined,
+    // Zonder eigen oorsprong zoomt de browser vanuit het midden en verdwijnt
+    // juist het gekozen brandpunt uit beeld.
+    transformOrigin:
+      fit === 'cover' ? `${adjust.focalX * 100}% ${adjust.focalY * 100}%` : undefined,
     opacity: adjust.opacity,
     filter: filters,
   }

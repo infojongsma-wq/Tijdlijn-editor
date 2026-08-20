@@ -50,10 +50,6 @@ export function Player({ doc }: Props) {
     )
   }
 
-  // De as loopt mee met de kaartvolgorde; de titelkaart wijst naar de eerste
-  // stop zodat de as niet leeg staat bij de opening.
-  const asIndexGevuld = asIndex.map((v, i) => (v === -1 ? (asIndex[i + 1] ?? 0) : v))
-
   switch (doc.settings.form) {
     case 'vertical':
     default:
@@ -61,7 +57,7 @@ export function Player({ doc }: Props) {
         <VerticalPlayer
           cards={cards}
           axisLabels={asLabels}
-          axisIndex={asIndexGevuld}
+          axisIndex={asIndex}
           showTime={showTime}
           settings={doc.settings}
           theme={doc.theme}

@@ -11,13 +11,13 @@ const MAANDEN = [
  * gedateerde momenten in dat jaar, wat voor een dossier de juiste volgorde is.
  */
 export function sortKey(d: PartialDate): number {
-  return Date.UTC(
-    d.year,
-    (d.month ?? 1) - 1,
-    d.day ?? 1,
-    d.hour ?? 0,
-    d.minute ?? 0,
-  )
+  // Niet Date.UTC(year, ...): die rekent jaar 1 t/m 99 om naar 1901-1999, en
+  // buildDate laat zulke jaartallen toe. Een dossier over het jaar 70 hoort
+  // niet ineens in de twintigste eeuw te belanden.
+  const datum = new Date(0)
+  datum.setUTCFullYear(d.year, (d.month ?? 1) - 1, d.day ?? 1)
+  datum.setUTCHours(d.hour ?? 0, d.minute ?? 0, 0, 0)
+  return datum.getTime()
 }
 
 /** Twee momenten op dezelfde kalenderdag? Bepaalt of we het tijdstip tonen. */
@@ -122,7 +122,10 @@ export function buildDate(
 }
 
 export function daysInMonth(year: number, month: number): number {
-  return new Date(year, month, 0).getDate()
+  // Zelfde valkuil als in sortKey: via setUTCFullYear om jaar 1-99 te sparen.
+  const datum = new Date(0)
+  datum.setUTCFullYear(year, month, 0)
+  return datum.getUTCDate()
 }
 
 export function precisionLabel(p: DatePrecision): string {
