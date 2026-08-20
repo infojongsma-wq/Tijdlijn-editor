@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { TimelineDoc } from '../model/types'
 import { Player } from '../player/Player'
-import { Button, Segmented } from './controls'
+import { Segmented } from './controls'
 
 type Formaat = 'desktop' | 'tablet' | 'mobiel'
 
@@ -21,19 +21,7 @@ interface Props {
 
 export function Preview({ doc, focusCardId }: Props) {
   const [formaat, setFormaat] = useState<Formaat>('desktop')
-  const [volledig, setVolledig] = useState(false)
   const maat = MATEN[formaat]
-
-  // Escape sluit de volledige weergave. Zonder dat zit je vast als de knop
-  // wegvalt achter de tijdlijn.
-  useEffect(() => {
-    if (!volledig) return
-    const opToets = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setVolledig(false)
-    }
-    window.addEventListener('keydown', opToets)
-    return () => window.removeEventListener('keydown', opToets)
-  }, [volledig])
 
   return (
     <div className="preview">
@@ -48,13 +36,7 @@ export function Preview({ doc, focusCardId }: Props) {
             { value: 'mobiel', label: 'Mobiel' },
           ]}
         />
-        <Button
-          onClick={() => setVolledig(true)}
-          variant="primary"
-          title="Bekijk de tijdlijn zoals het publiek hem straks ziet"
-        >
-          Bekijken
-        </Button>
+        <span className="preview-hint">Scrol in het kader, of gebruik de pijltjestoetsen</span>
       </div>
 
       <div className={`preview-stage is-${formaat}`}>
@@ -69,23 +51,6 @@ export function Preview({ doc, focusCardId }: Props) {
           <Player doc={doc} focusCardId={focusCardId} />
         </div>
       </div>
-
-      {volledig && (
-        <div className="volledig" role="dialog" aria-modal="true" aria-label="Voorvertoning">
-          <div className="volledig-bar">
-            <span className="volledig-naam">{doc.name}</span>
-            <span className="volledig-hint">Zo ziet het publiek de tijdlijn</span>
-            <Button onClick={() => setVolledig(false)} title="Sluiten (Esc)">
-              Sluiten
-            </Button>
-          </div>
-          <div className="volledig-speler">
-            {/* Zonder focusCardId: in de voorvertoning begin je bij het begin,
-                niet bij de kaart die je toevallig aan het bewerken was. */}
-            <Player doc={doc} />
-          </div>
-        </div>
-      )}
     </div>
   )
 }

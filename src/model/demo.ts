@@ -81,8 +81,8 @@ const BRONNEN: Bron[] = [
     textPlacement: 'below',
     source: 'RTV Oost',
     annotations: [
-      { id: 'demo-wolf', x: 0.34, y: 0.5, text: 'De wolf, gefilmd door een omwonende', reveal: 'always' },
-      { id: 'demo-n347', x: 0.68, y: 0.52, text: 'De N347, waar het dier zou zijn doodgereden', reveal: 'hover' },
+      { id: 'demo-wolf', x: 0.34, y: 0.5, bx: 0.5, by: 0.24, text: 'De wolf, gefilmd door een omwonende', reveal: 'always' },
+      { id: 'demo-n347', x: 0.68, y: 0.52, bx: 0.52, by: 0.78, text: 'De N347, waar het dier zou zijn doodgereden', reveal: 'hover' },
     ],
   },
   {

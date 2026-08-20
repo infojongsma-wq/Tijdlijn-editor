@@ -1,4 +1,4 @@
-import { SECUNDAIR } from './palette'
+import { RICH_KLEUREN } from './palette'
 
 /**
  * Opmaak in de lopende tekst: vet, cursief, dun, en losse woorden in een
@@ -10,12 +10,10 @@ import { SECUNDAIR } from './palette'
  * handmatig aangepast bestand.
  */
 
-/** De kleuren waarin je een woord kunt uitlichten, op naam. */
-export const KLEURNAMEN = SECUNDAIR.map((s) => s.naam.replace('Oost ', '').toLowerCase())
+/** De kleuren waarin je een woord kunt zetten, op sleutel. */
+export const KLEURNAMEN = RICH_KLEUREN.map((k) => k.key)
 
-const KLEUR_HEX = new Map(
-  SECUNDAIR.map((s) => [s.naam.replace('Oost ', '').toLowerCase(), s.hex]),
-)
+const KLEUR_HEX = new Map(RICH_KLEUREN.map((k) => [k.key, k.hex]))
 
 export function kleurHex(naam: string): string | null {
   return KLEUR_HEX.get(naam) ?? null

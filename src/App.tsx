@@ -8,6 +8,7 @@ import { CardList } from './ui/CardList'
 import { CardForm } from './ui/CardForm'
 import { SettingsPanel } from './ui/SettingsPanel'
 import { Preview } from './ui/Preview'
+import { Player } from './player/Player'
 import { Button } from './ui/controls'
 import './styles/app.css'
 
@@ -22,6 +23,7 @@ export function App() {
     () => (bewaard?.cards[0]?.id ?? null),
   )
   const [tab, setTab] = useState<Tab>('moment')
+  const [bekijk, setBekijk] = useState(false)
   const [melding, setMelding] = useState<string | null>(null)
   const bestandRef = useRef<HTMLInputElement>(null)
   // Eén melding over mislukt bewaren is genoeg; hem elke wijziging herhalen
@@ -150,6 +152,15 @@ export function App() {
     [history],
   )
 
+  useEffect(() => {
+    if (!bekijk) return
+    const opToets = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setBekijk(false)
+    }
+    window.addEventListener('keydown', opToets)
+    return () => window.removeEventListener('keydown', opToets)
+  }, [bekijk])
+
   // Sneltoetsen. Niet onderscheppen terwijl iemand in een tekstveld typt —
   // daar heeft de browser zijn eigen ongedaan-maken.
   useEffect(() => {
@@ -198,6 +209,13 @@ export function App() {
         </div>
 
         <div className="topbar-group topbar-right">
+          <Button
+            onClick={() => setBekijk(true)}
+            variant="primary"
+            title="De hele tijdlijn schermvullend, zoals het publiek hem ziet"
+          >
+            ▶ Bekijken
+          </Button>
           <Button onClick={laadVoorbeeld} title="Vult de editor met het wolvendossier">
             Voorbeeld
           </Button>
@@ -222,6 +240,23 @@ export function App() {
           <button type="button" onClick={() => setMelding(null)} aria-label="Melding sluiten">
             ×
           </button>
+        </div>
+      )}
+
+      {bekijk && (
+        <div className="volledig" role="dialog" aria-modal="true" aria-label="Voorvertoning">
+          <div className="volledig-bar">
+            <span className="volledig-naam">{doc.name}</span>
+            <span className="volledig-hint">Zo ziet het publiek de tijdlijn — Esc om te sluiten</span>
+            <Button onClick={() => setBekijk(false)} title="Sluiten (Esc)">
+              Sluiten
+            </Button>
+          </div>
+          <div className="volledig-speler">
+            {/* Zonder focusCardId: hier begin je bij het begin van het verhaal,
+                niet bij de kaart die je toevallig aan het bewerken was. */}
+            <Player doc={doc} />
+          </div>
         </div>
       )}
 

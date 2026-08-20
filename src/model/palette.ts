@@ -42,6 +42,47 @@ export const ACHTERGRONDEN: Swatch[] = [
   { naam: 'Wit', hex: OOST_WIT },
   { naam: 'Lichtblauw', hex: OOST_LICHTBLAUW },
   { naam: 'Crème', hex: OOST_CREME },
+  { naam: 'Zacht paars', hex: '#F3E6FF' },
+  { naam: 'Zacht rood', hex: '#FFECEC' },
+  { naam: 'Zacht oranje', hex: '#FFF0E7' },
+  { naam: 'Zacht geel', hex: '#FFF7E7' },
+  { naam: 'Zacht groen', hex: '#F5F7EC' },
+]
+
+/** De 10%-tinten uit de huisstijl — de nuances. */
+export const TINTEN: Swatch[] = [
+  { naam: 'Zacht blauw', hex: '#E7EEF9' },
+  { naam: 'Zacht paars', hex: '#F3E6FF' },
+  { naam: 'Zacht rood', hex: '#FFECEC' },
+  { naam: 'Zacht oranje', hex: '#FFF0E7' },
+  { naam: 'Zacht geel', hex: '#FFF7E7' },
+  { naam: 'Zacht groen', hex: '#F5F7EC' },
+]
+
+/**
+ * De kleuren waarin je in de lopende tekst een woord kunt zetten: wit en
+ * donkerblauw om terug te keren naar 'gewoon', de zes merkkleuren om uit te
+ * lichten, en de zes tinten als nuance.
+ */
+export interface RichKleur {
+  key: string
+  naam: string
+  hex: string
+}
+
+export const RICH_KLEUREN: RichKleur[] = [
+  { key: 'wit', naam: 'Wit', hex: OOST_WIT },
+  { key: 'donker', naam: 'Donkerblauw', hex: OOST_DONKERBLAUW },
+  ...SECUNDAIR.map((s) => ({
+    key: s.naam.replace('Oost ', '').toLowerCase(),
+    naam: s.naam,
+    hex: s.hex,
+  })),
+  ...TINTEN.map((t) => ({
+    key: 'zacht' + t.naam.replace('Zacht ', '').toLowerCase(),
+    naam: t.naam,
+    hex: t.hex,
+  })),
 ]
 
 export const TEKSTKLEUREN: Swatch[] = [

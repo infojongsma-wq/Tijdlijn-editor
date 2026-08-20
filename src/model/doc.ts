@@ -90,9 +90,11 @@ export function cardTypeLabel(type: CardType): string {
   }
 }
 
-/** Heeft dit kaarttype een beeld nodig om iets te laten zien? */
+/** Kan dit kaarttype een beeld tonen? Alleen 'alleen tekst' niet. Het citaat
+ *  gebruikt zijn beeld als achtergrond — dat hoorde hier dus ook bij, anders
+ *  staat er een foto op de kaart die je nergens kunt bewerken. */
 export function typeUsesMedia(type: CardType): boolean {
-  return type === 'image-text' || type === 'image' || type === 'graphic' || type === 'title'
+  return type !== 'text'
 }
 
 export function typeUsesBody(type: CardType): boolean {
@@ -162,11 +164,18 @@ function normaliseAnnotations(raw: unknown): Annotation[] {
     if (!item || typeof item !== 'object') return []
     const a = item as Partial<Annotation>
     if (typeof a.x !== 'number' || typeof a.y !== 'number') return []
+    const klem = (n: number) => Math.min(1, Math.max(0, n))
+    const x = klem(a.x)
+    const y = klem(a.y)
     return [
       {
         id: typeof a.id === 'string' ? a.id : newId(),
-        x: Math.min(1, Math.max(0, a.x)),
-        y: Math.min(1, Math.max(0, a.y)),
+        x,
+        y,
+        // Oudere bestanden kennen geen ballonpositie; die krijgt hij dan naast
+        // het anker, weg van de dichtstbijzijnde rand.
+        bx: typeof a.bx === 'number' ? klem(a.bx) : klem(x > 0.55 ? x - 0.3 : x + 0.3),
+        by: typeof a.by === 'number' ? klem(a.by) : y,
         text: typeof a.text === 'string' ? a.text : '',
         reveal: a.reveal === 'hover' ? 'hover' : 'always',
       },

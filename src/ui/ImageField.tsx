@@ -120,6 +120,13 @@ export function ImageField({ media, onChange, cropped }: Props) {
             `aanwijzer:${id}`,
           )
         }}
+        onBallon={(id, bx, by) => {
+          setActieveAanwijzer(id)
+          zetAanwijzers(
+            media.annotations.map((a) => (a.id === id ? { ...a, bx, by } : a)),
+            `ballon:${id}`,
+          )
+        }}
       />
 
       <div className="imgfield-bar">
@@ -274,9 +281,12 @@ function Aanwijzers({
   const voegToe = () => {
     const nieuw: Annotation = {
       id: newId(),
-      // Iets links van het midden, zodat de ballon er meteen naast past.
+      // Anker iets links van het midden, ballon er rechtsboven naast; allebei
+      // daarna vrij te verslepen in het voorbeeldkader.
       x: 0.38,
-      y: 0.5,
+      y: 0.55,
+      bx: 0.62,
+      by: 0.3,
       text: '',
       reveal: 'always',
     }
@@ -296,7 +306,8 @@ function Aanwijzers({
       {annotations.length === 0 ? (
         <p className="anlist-leeg">
           Zet een punt op de foto met een tekstje ernaast, verbonden door een
-          lijntje — om iets uit te lichten of te benoemen.
+          lijntje. In het voorbeeld hierboven sleep je de stip (het anker) en
+          het genummerde label (de ballon) elk naar hun eigen plek.
         </p>
       ) : (
         <ol className="anlist-items">
@@ -364,6 +375,7 @@ function FocalPicker({
   actieveAanwijzer,
   onFocal,
   onAanwijzer,
+  onBallon,
 }: {
   media: Media
   interactief: boolean
@@ -371,8 +383,10 @@ function FocalPicker({
   actieveAanwijzer: string | null
   onFocal: (x: number, y: number) => void
   onAanwijzer: (id: string, x: number, y: number) => void
+  onBallon: (id: string, x: number, y: number) => void
 }) {
   const vlakRef = useRef<HTMLDivElement>(null)
+  /** Wat er versleept wordt: 'focal', 'a:<id>' (anker) of 'b:<id>' (ballon). */
   const sleept = useRef<string | null>(null)
 
   const fractie = useCallback((clientX: number, clientY: number) => {
@@ -386,16 +400,18 @@ function FocalPicker({
   }, [])
 
   const opPointerDown = (e: React.PointerEvent) => {
-    const doel = (e.target as HTMLElement).closest('[data-aanwijzer]')
-    const id = doel?.getAttribute('data-aanwijzer') ?? null
+    const el = e.target as HTMLElement
+    const ballon = el.closest('[data-ballon]')?.getAttribute('data-ballon')
+    const anker = el.closest('[data-aanwijzer]')?.getAttribute('data-aanwijzer')
 
-    if (!id && !interactief) return
+    if (!ballon && !anker && !interactief) return
     e.currentTarget.setPointerCapture(e.pointerId)
-    sleept.current = id ?? 'focal'
+    sleept.current = ballon ? `b:${ballon}` : anker ? `a:${anker}` : 'focal'
 
     const f = fractie(e.clientX, e.clientY)
     if (!f) return
-    if (id) onAanwijzer(id, f.x, f.y)
+    if (ballon) onBallon(ballon, f.x, f.y)
+    else if (anker) onAanwijzer(anker, f.x, f.y)
     else onFocal(f.x, f.y)
   }
 
@@ -404,7 +420,8 @@ function FocalPicker({
     const f = fractie(e.clientX, e.clientY)
     if (!f) return
     if (sleept.current === 'focal') onFocal(f.x, f.y)
-    else onAanwijzer(sleept.current, f.x, f.y)
+    else if (sleept.current.startsWith('b:')) onBallon(sleept.current.slice(2), f.x, f.y)
+    else onAanwijzer(sleept.current.slice(2), f.x, f.y)
   }
 
   const opPointerUp = () => {
@@ -497,13 +514,37 @@ function FocalPicker({
         />
       )}
 
+      {media.annotations.length > 0 && (
+        <svg className="focal-lijnen" aria-hidden="true">
+          {media.annotations.map((a) => (
+            <line
+              key={a.id}
+              x1={`${a.x * 100}%`}
+              y1={`${a.y * 100}%`}
+              x2={`${a.bx * 100}%`}
+              y2={`${a.by * 100}%`}
+            />
+          ))}
+        </svg>
+      )}
+
       {media.annotations.map((a, i) => (
         <span
           key={a.id}
           data-aanwijzer={a.id}
           className={`focal-an ${a.id === actieveAanwijzer ? 'is-active' : ''}`}
           style={{ left: `${a.x * 100}%`, top: `${a.y * 100}%` }}
-          title={a.text || `Tekstballon ${i + 1}`}
+          title={`Anker van ballon ${i + 1} — sleep naar waar de lijn moet wijzen`}
+        />
+      ))}
+
+      {media.annotations.map((a, i) => (
+        <span
+          key={a.id}
+          data-ballon={a.id}
+          className={`focal-bal ${a.id === actieveAanwijzer ? 'is-active' : ''}`}
+          style={{ left: `${a.bx * 100}%`, top: `${a.by * 100}%` }}
+          title={`Ballon ${i + 1}${a.text ? ` — ${a.text}` : ''} — sleep naar waar de tekst moet staan`}
         >
           {i + 1}
         </span>

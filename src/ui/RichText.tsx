@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { LICHT_CLASS, sanitizeRich } from '../model/richtext'
-import { SECUNDAIR } from '../model/palette'
+import { RICH_KLEUREN } from '../model/palette'
 
 interface Props {
   value: string
@@ -115,28 +115,30 @@ export function RichText({ value, onChange, rows = 6, placeholder, ariaLabel }: 
 
         <span className="rt-sep" aria-hidden="true" />
 
-        {SECUNDAIR.map((s) => {
-          const sleutel = s.naam.replace('Oost ', '').toLowerCase()
-          return (
-            <button
-              key={sleutel}
-              type="button"
-              className="rt-kleur"
-              style={{ background: s.hex }}
-              title={`Uitlichten in ${s.naam}`}
-              aria-label={`Uitlichten in ${s.naam}`}
-              onClick={() =>
-                omhul(() => {
-                  const span = document.createElement('span')
-                  span.setAttribute('data-kleur', sleutel)
-                  return span
-                })
-              }
-            />
-          )
-        })}
+        {RICH_KLEUREN.map((k) => (
+          <button
+            key={k.key}
+            type="button"
+            className="rt-kleur"
+            style={{ background: k.hex }}
+            title={k.naam}
+            aria-label={`Tekstkleur ${k.naam}`}
+            onClick={() =>
+              omhul(() => {
+                const span = document.createElement('span')
+                span.setAttribute('data-kleur', k.key)
+                return span
+              })
+            }
+          />
+        ))}
 
-        <button type="button" className="rt-btn rt-wis" onClick={wisKleur} title="Opmaak weghalen">
+        <button
+          type="button"
+          className="rt-btn rt-wis"
+          onClick={wisKleur}
+          title="Kleur weghalen — terug naar de gewone tekstkleur"
+        >
           ⌫
         </button>
       </div>

@@ -355,9 +355,10 @@
 .preview-bar {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   padding: 12px 18px;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 .preview-hint {
   font-size: 12.5px;
@@ -1045,6 +1046,22 @@
 .rt-veld [data-kleur='oranje'] { color: #ff6813; }
 .rt-veld [data-kleur='geel'] { color: #c98600; }
 .rt-veld [data-kleur='groen'] { color: #7d8c22; }
+.rt-veld [data-kleur='donker'] { color: #131720; }
+/* Wit en de zachte tinten zijn op het witte invulveld onzichtbaar; in de
+   editor krijgen ze een donker blokje achter zich, in de speler niet. */
+.rt-veld [data-kleur='wit'],
+.rt-veld [data-kleur^='zacht'] {
+  background: #131720;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+.rt-veld [data-kleur='wit'] { color: #ffffff; }
+.rt-veld [data-kleur='zachtblauw'] { color: #e7eef9; }
+.rt-veld [data-kleur='zachtpaars'] { color: #f3e6ff; }
+.rt-veld [data-kleur='zachtrood'] { color: #ffecec; }
+.rt-veld [data-kleur='zachtoranje'] { color: #fff0e7; }
+.rt-veld [data-kleur='zachtgeel'] { color: #fff7e7; }
+.rt-veld [data-kleur='zachtgroen'] { color: #f5f7ec; }
 
 /* ---------- tekstballonnen in de editor ---------- */
 
@@ -1131,24 +1148,49 @@
   font-size: 12px;
 }
 
-/* Genummerde punten op het voorbeeldkader. */
+/* De handvatten op het voorbeeldkader: een stip voor het anker, een
+   genummerde pil voor de ballon, en de lijn ertussen. Allebei versleepbaar. */
+.focal-lijnen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.focal-lijnen line {
+  stroke: var(--oost-blauw);
+  stroke-width: 2;
+}
 .focal-an {
   position: absolute;
-  width: 22px;
-  height: 22px;
-  margin: -11px 0 0 -11px;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
   border-radius: 50%;
   background: var(--oost-blauw);
-  color: var(--oost-wit);
   border: 2px solid var(--oost-wit);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 18px;
-  text-align: center;
   cursor: grab;
   touch-action: none;
 }
 .focal-an.is-active {
+  background: var(--oost-geel);
+}
+.focal-bal {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: var(--oost-donkerblauw);
+  color: var(--oost-wit);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 5px 9px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--oost-wit);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.focal-bal.is-active {
   background: var(--oost-geel);
   color: #3d2600;
 }

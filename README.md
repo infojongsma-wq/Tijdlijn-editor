@@ -13,13 +13,15 @@ publiceren.
   volgorde volgt automatisch uit de datum.
 - **Zes soorten kaarten** — titelkaart, beeld met tekst, alleen beeld, alleen
   tekst, citaat en graphic. Om te wisselen zonder je werk kwijt te raken.
-- **Tekstopmaak** — vet, cursief, dun, en losse woorden uitlichten in een
-  huisstijlkleur. Geplakte tekst uit Word komt binnen als kale tekst.
-- **Tekstballonnen met een verbindingslijn** — een punt op de foto met een
-  tekstje ernaast, meteen zichtbaar of pas bij aanwijzen. Het ankerpunt staat
-  in fracties, dus het klopt op elk schermformaat. Ditzelfde mechanisme dient
-  straks voor een aanklikbare kaart van Overijssel en voor toelichtingen op een
-  grafiek.
+- **Tekstopmaak** — vet, cursief, dun, en losse woorden in een kleur: wit en
+  donkerblauw om terug te keren naar gewoon, de zes merkkleuren, en de zes
+  zachte tinten uit de huisstijl als nuance. Geplakte tekst uit Word komt
+  binnen als kale tekst.
+- **Tekstballonnen met een verbindingslijn** — anker én ballon sleep je elk
+  vrij naar hun plek; de lijn ertussen tekent zichzelf. Meteen zichtbaar of pas
+  bij aanwijzen. Beide posities staan in fracties, dus het klopt op elk
+  schermformaat. Ditzelfde mechanisme dient straks voor een aanklikbare kaart
+  van Overijssel en voor toelichtingen op een grafiek.
 - **Beeld bijstellen** — brandpunt slepen, inzoomen, doorzichtigheid,
   belichting, contrast en verzadiging. De foto zelf wordt daarbij nooit
   aangeraakt; alleen de instellingen worden bewaard.

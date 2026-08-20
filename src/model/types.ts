@@ -79,10 +79,13 @@ export const DEFAULT_ADJUST: MediaAdjust = {
  */
 export interface Annotation {
   id: string
-  /** 0-1, fractie van links. */
+  /** Het anker: waar de lijn naar wijst. 0-1, fractie van links. */
   x: number
   /** 0-1, fractie van boven. */
   y: number
+  /** De ballon: waar de tekst staat. Vrij te verslepen, los van het anker. */
+  bx: number
+  by: number
   text: string
   /** Meteen zichtbaar, of pas bij aanwijzen en aantikken. */
   reveal: 'always' | 'hover'

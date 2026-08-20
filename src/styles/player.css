@@ -169,10 +169,12 @@
   padding: clamp(20px, 4cqi, 60px);
   max-width: 72ch;
   /* Een kop van negentig tekens met vier regels tekst past niet altijd op een
-     telefoon. Liever een eigen scrollbalkje dan afgekapte inhoud. */
+     telefoon. Liever een eigen scrollbalkje dan afgekapte inhoud. Maar géén
+     overscroll-behavior: contain — op een element dat niets te scrollen heeft
+     slikt dat het muiswiel in, en dan lijkt de hele tijdlijn vast te zitten
+     zodra de muis boven de tekst staat. */
   max-height: 100%;
   overflow-y: auto;
-  overscroll-behavior: contain;
 }
 .pc-center {
   margin: auto;
@@ -655,15 +657,24 @@
   pointer-events: none;
 }
 
+/* Eén aanwijzer beslaat de hele laag; alleen punt en ballon vangen de muis.
+   Omdat :hover ook geldt voor voorouders van het aangewezen element, is deze
+   wrapper het schakelpunt voor 'pas tonen bij aanwijzen'. */
 .an {
   position: absolute;
-  pointer-events: auto;
+  inset: 0;
+  pointer-events: none;
+}
+
+.an-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .an-punt {
   position: absolute;
-  left: 0;
-  top: 0;
   width: 22px;
   height: 22px;
   margin: -11px 0 0 -11px;
@@ -674,6 +685,7 @@
   justify-content: center;
   background: rgba(255, 255, 255, 0.14);
   backdrop-filter: blur(2px);
+  pointer-events: auto;
 }
 .an-kern {
   width: 8px;
@@ -681,17 +693,13 @@
   border-radius: 50%;
 }
 
-/* De ballon staat naast het punt, verbonden door een kort lijntje. Ligt het
-   punt in de rechterhelft, dan klapt de ballon naar links — anders loopt hij
-   het beeld uit. */
+/* De ballon staat gecentreerd op zijn eigen ankerpunt, vrij te plaatsen in de
+   editor. De lijn loopt van middelpunt naar middelpunt en verdwijnt onder de
+   ballon, die er later overheen getekend wordt. */
 .an-ballon {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  transform: translate(-50%, -50%);
   display: block;
-  /* De ballon hangt in een ouder zonder eigen breedte. Zonder max-content valt
-     hij daardoor terug op de smalst mogelijke regel en breekt de tekst op elk
-     woord af. */
   width: max-content;
   max-width: min(30ch, 44cqi);
   padding: 9px 13px;
@@ -701,72 +709,39 @@
   line-height: 1.4;
   font-weight: 500;
   opacity: 0.97;
-}
-.an.is-right .an-ballon {
-  left: 34px;
-}
-.an.is-left .an-ballon {
-  right: 34px;
-}
-
-.an-lijn {
-  position: absolute;
-  top: 50%;
-  width: 24px;
-  height: 2px;
-  margin-top: -1px;
-}
-.an.is-right .an-lijn {
-  left: -25px;
-}
-.an.is-left .an-lijn {
-  right: -25px;
+  pointer-events: auto;
 }
 
 /* Pas tonen bij aanwijzen of aantikken. Op een telefoon bestaat 'aanwijzen'
-   niet, dus focus telt net zo goed — het punt is dan aan te tikken. */
-.an.is-hover .an-ballon {
+   niet, dus toetsenbordfocus en aantikken tellen net zo goed. */
+.an.is-hover .an-ballon,
+.an.is-hover .an-svg {
   opacity: 0;
   visibility: hidden;
   transition: opacity 140ms ease;
 }
 .an.is-hover:hover .an-ballon,
-.an.is-hover:focus-visible .an-ballon,
 .an.is-hover:focus-within .an-ballon {
   opacity: 0.97;
+  visibility: visible;
+}
+.an.is-hover:hover .an-svg,
+.an.is-hover:focus-within .an-svg {
+  opacity: 1;
   visibility: visible;
 }
 .an.is-hover .an-punt {
   cursor: pointer;
 }
-.an.is-hover:focus-visible {
+.an .an-punt:focus-visible {
   outline: none;
-}
-.an.is-hover:focus-visible .an-punt {
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.7);
 }
 
-/* Op een smal scherm passen ballonnen naast elkaar niet meer. Ze worden dan
-   smaller en kruipen dichter op hun punt. */
 @container (max-width: 560px) {
   .an-ballon {
-    max-width: 60cqi;
+    max-width: 56cqi;
     padding: 7px 10px;
-  }
-  .an.is-right .an-ballon {
-    left: 24px;
-  }
-  .an.is-left .an-ballon {
-    right: 24px;
-  }
-  .an-lijn {
-    width: 14px;
-  }
-  .an.is-right .an-lijn {
-    left: -15px;
-  }
-  .an.is-left .an-lijn {
-    right: -15px;
   }
 }
 
@@ -781,3 +756,20 @@
   white-space: nowrap;
   border: 0;
 }
+
+.pc-body [data-kleur='wit'],
+.pc-quotetext [data-kleur='wit'] { color: #ffffff; }
+.pc-body [data-kleur='donker'],
+.pc-quotetext [data-kleur='donker'] { color: #131720; }
+.pc-body [data-kleur='zachtblauw'],
+.pc-quotetext [data-kleur='zachtblauw'] { color: #e7eef9; }
+.pc-body [data-kleur='zachtpaars'],
+.pc-quotetext [data-kleur='zachtpaars'] { color: #f3e6ff; }
+.pc-body [data-kleur='zachtrood'],
+.pc-quotetext [data-kleur='zachtrood'] { color: #ffecec; }
+.pc-body [data-kleur='zachtoranje'],
+.pc-quotetext [data-kleur='zachtoranje'] { color: #fff0e7; }
+.pc-body [data-kleur='zachtgeel'],
+.pc-quotetext [data-kleur='zachtgeel'] { color: #fff7e7; }
+.pc-body [data-kleur='zachtgroen'],
+.pc-quotetext [data-kleur='zachtgroen'] { color: #f5f7ec; }
