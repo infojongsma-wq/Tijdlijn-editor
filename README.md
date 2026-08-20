@@ -13,6 +13,13 @@ publiceren.
   volgorde volgt automatisch uit de datum.
 - **Zes soorten kaarten** — titelkaart, beeld met tekst, alleen beeld, alleen
   tekst, citaat en graphic. Om te wisselen zonder je werk kwijt te raken.
+- **Tekstopmaak** — vet, cursief, dun, en losse woorden uitlichten in een
+  huisstijlkleur. Geplakte tekst uit Word komt binnen als kale tekst.
+- **Tekstballonnen met een verbindingslijn** — een punt op de foto met een
+  tekstje ernaast, meteen zichtbaar of pas bij aanwijzen. Het ankerpunt staat
+  in fracties, dus het klopt op elk schermformaat. Ditzelfde mechanisme dient
+  straks voor een aanklikbare kaart van Overijssel en voor toelichtingen op een
+  grafiek.
 - **Beeld bijstellen** — brandpunt slepen, inzoomen, doorzichtigheid,
   belichting, contrast en verzadiging. De foto zelf wordt daarbij nooit
   aangeraakt; alleen de instellingen worden bewaard.
@@ -20,10 +27,14 @@ publiceren.
   zoals de overgang 'duwen' in PowerPoint.
 - **De as** — links, rechts, boven, onder of verborgen. Aanklikbaar, met
   voortgangsbalk en teller.
-- **Kleuren en contrast** — het palet is aanpasbaar, en de editor waarschuwt als
-  een combinatie te weinig contrast heeft.
+- **Kleuren uit de huisstijl** — geen vrije kleurkiezer maar een staalkaart met
+  de kleuren van RTV Oost. Je kiest achtergrond, tekst en accent; de zachte
+  tekstkleur en de lijn van de as worden daaruit berekend, zodat er geen
+  onleesbare combinatie te maken valt. De editor toont het contrast erbij.
 - **Ongedaan maken** — twintig stappen terug, en weer vooruit (Ctrl+Z /
   Ctrl+Shift+Z).
+- **Bekijken** — de tijdlijn schermvullend, zoals het publiek hem straks ziet.
+  Escape sluit hem weer.
 - **Opslaan en openen** — als bestand op je eigen computer (Ctrl+S). Tussentijds
   bewaart de editor automatisch, zodat een dichtgeklapte laptop niets kost.
 
@@ -111,6 +122,6 @@ tijdlijn begint, gooit het weg met *Nieuw*.
 ## Nog niet gebouwd
 
 De vijf andere tijdlijnvormen (filmstrip, duo-cards, magazine, headlines,
-horizontaal), tekst met kleuraccenten en links, knoppen onder de tekst,
-aanwijzers op beeld, hoofdstukken, het inklappen van lege perioden, video en de
-embed-keten met meegroeiende hoogte.
+horizontaal), links in de lopende tekst, knoppen onder de tekst, hoofdstukken,
+het inklappen van lege perioden, video en de embed-keten met meegroeiende
+hoogte.

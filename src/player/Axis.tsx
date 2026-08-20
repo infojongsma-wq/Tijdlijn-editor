@@ -1,4 +1,5 @@
 import type { AxisPosition, Theme } from '../model/types'
+import { afgeleid } from '../model/palette'
 
 interface Props {
   labels: string[]
@@ -29,16 +30,17 @@ export function Axis({
   const horizontaal = position === 'top' || position === 'bottom'
   const actief = Math.round(progress)
   const alleLabels = labels.length <= ALLE_LABELS_TOT
+  const extra = afgeleid(theme)
   const fractie = labels.length > 1 ? progress / (labels.length - 1) : 0
 
   return (
     <nav
       className={`ax ax-${position}`}
-      style={{ ['--ax-line' as string]: theme.axisLine, ['--ax-accent' as string]: theme.accent }}
+      style={{ ['--ax-line' as string]: extra.axisLine, ['--ax-accent' as string]: theme.accent }}
       aria-label="Tijdlijn"
     >
       {showCounter && (
-        <p className="ax-counter" style={{ color: theme.textMuted }}>
+        <p className="ax-counter" style={{ color: extra.textMuted }}>
           <span style={{ color: theme.text }}>{Math.min(actief + 1, labels.length)}</span>
           {' / '}
           {labels.length}
@@ -74,7 +76,7 @@ export function Axis({
                   <span className="ax-dot" />
                   <span
                     className={`ax-label ${toonLabel ? '' : 'is-hidden'}`}
-                    style={{ color: isActief ? theme.text : theme.textMuted }}
+                    style={{ color: isActief ? theme.text : extra.textMuted }}
                   >
                     {label}
                   </span>

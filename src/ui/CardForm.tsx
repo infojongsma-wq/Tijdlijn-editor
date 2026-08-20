@@ -3,6 +3,7 @@ import { buildDate, precisionLabel } from '../model/dates'
 import { cardTypeLabel, typeUsesBody, typeUsesMedia } from '../model/doc'
 import { ImageField } from './ImageField'
 import { Field, NumberInput, Segmented, Select, TextArea, TextInput } from './controls'
+import { RichText } from './RichText'
 
 interface Props {
   card: Card
@@ -53,7 +54,7 @@ export function CardForm({ card, onChange }: Props) {
               min={1}
               max={31}
               placeholder="dag"
-              width={72}
+              width={62}
               onChange={(v) => zetDatum(date.year, date.month, v, date.hour, date.minute)}
             />
             <NumberInput
@@ -61,7 +62,7 @@ export function CardForm({ card, onChange }: Props) {
               min={1}
               max={12}
               placeholder="mnd"
-              width={72}
+              width={62}
               onChange={(v) => zetDatum(date.year, v, date.day, date.hour, date.minute)}
             />
             <NumberInput
@@ -69,7 +70,7 @@ export function CardForm({ card, onChange }: Props) {
               min={1}
               max={9999}
               placeholder="jaar"
-              width={86}
+              width={74}
               onChange={(v) => zetDatum(v, date.month, date.day, date.hour, date.minute)}
             />
             <span className="datumrij-sep">om</span>
@@ -78,7 +79,7 @@ export function CardForm({ card, onChange }: Props) {
               min={0}
               max={23}
               placeholder="uu"
-              width={64}
+              width={56}
               onChange={(v) => zetDatum(date.year, date.month, date.day, v, date.minute)}
             />
             <NumberInput
@@ -86,7 +87,7 @@ export function CardForm({ card, onChange }: Props) {
               min={0}
               max={59}
               placeholder="mm"
-              width={64}
+              width={56}
               onChange={(v) =>
                 zetDatum(date.year, date.month, date.day, date.hour ?? 0, v)
               }
@@ -116,10 +117,15 @@ export function CardForm({ card, onChange }: Props) {
       )}
 
       {typeUsesBody(card.type) && !isTitel && (
-        <Field label={card.type === 'quote' ? 'Het citaat' : 'Tekst'}>
-          <TextArea
+        <Field
+          group
+          label={card.type === 'quote' ? 'Het citaat' : 'Tekst'}
+          hint="Selecteer een stuk tekst en kies een opmaak of een kleur."
+        >
+          <RichText
             value={card.body}
             rows={card.type === 'quote' ? 3 : 6}
+            ariaLabel={card.type === 'quote' ? 'Het citaat' : 'Tekst'}
             placeholder={
               card.type === 'quote'
                 ? 'Ook dan mag je niet zomaar afschieten.'

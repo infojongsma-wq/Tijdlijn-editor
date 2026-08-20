@@ -1,5 +1,7 @@
-import type { Card, Theme } from '../model/types'
+import type { Annotation, Card, Media, Theme } from '../model/types'
 import { formatDate } from '../model/dates'
+import { sanitizeRich } from '../model/richtext'
+import { afgeleid } from '../model/palette'
 import { mediaStyle, creditLine } from './media'
 
 interface Props {
@@ -39,18 +41,12 @@ export function CardView({ card, theme, showTime }: Props) {
 function TitleCard({ card, theme }: { card: Card; theme: Theme }) {
   return (
     <article className="pc pc-title">
-      {card.media && (
-        <div className="pc-bleed">
-          <img
-            src={card.media.src}
-            alt={card.media.alt}
-            style={mediaStyle(card.media, 'cover')}
-          />
-          <div className="pc-veil pc-veil-strong" />
-        </div>
-      )}
+      {card.media && <Beeld media={card.media} theme={theme} veil="strong" />}
       <div className="pc-inner pc-center">
-        <span className="pc-badge" style={{ background: theme.accent, color: theme.onAccent }}>
+        <span
+          className="pc-badge"
+          style={{ background: theme.accent, color: afgeleid(theme).onAccent }}
+        >
           Dossier
         </span>
         <h1 className="pc-h1">{card.title || 'Naamloos dossier'}</h1>
@@ -81,19 +77,16 @@ function ImageTextCard({
 
   return (
     <article className={`pc pc-imagetext ${naast ? 'is-beside' : onder ? 'is-below' : 'is-over'}`}>
-      <div className={onder || naast ? 'pc-framed' : 'pc-bleed'}>
-        <img
-          src={card.media.src}
-          alt={card.media.alt}
-          style={mediaStyle(card.media, 'cover')}
-        />
-        {!onder && !naast && <div className="pc-veil" />}
-      </div>
-
+      <Beeld
+        media={card.media}
+        theme={theme}
+        veil={onder || naast ? 'none' : 'soft'}
+        ingekaderd={onder || naast}
+      />
       <div className="pc-inner">
         <Meta datum={datum} theme={theme} />
         <h2 className="pc-h2">{card.title}</h2>
-        {card.body && <p className="pc-body">{card.body}</p>}
+        <Body html={card.body} />
         <Credit card={card} />
       </div>
     </article>
@@ -104,9 +97,7 @@ function ImageOnlyCard({ card, theme }: { card: Card; theme: Theme }) {
   if (!card.media) return <Empty theme={theme} />
   return (
     <article className="pc pc-imageonly">
-      <div className="pc-bleed">
-        <img src={card.media.src} alt={card.media.alt} style={mediaStyle(card.media, 'cover')} />
-      </div>
+      <Beeld media={card.media} theme={theme} veil="none" />
       {creditLine(card.media) && (
         <div className="pc-inner pc-bottom">
           <Credit card={card} />
@@ -122,7 +113,7 @@ function TextCard({ card, theme, datum }: { card: Card; theme: Theme; datum: str
       <div className="pc-inner pc-middle">
         <Meta datum={datum} theme={theme} />
         <h2 className="pc-h2">{card.title}</h2>
-        {card.body && <p className="pc-body pc-body-lead">{card.body}</p>}
+        <Body html={card.body} lead />
       </div>
     </article>
   )
@@ -131,23 +122,20 @@ function TextCard({ card, theme, datum }: { card: Card; theme: Theme; datum: str
 function QuoteCard({ card, theme, datum }: { card: Card; theme: Theme; datum: string }) {
   return (
     <article className="pc pc-quote">
-      {card.media && (
-        <div className="pc-bleed">
-          <img src={card.media.src} alt={card.media.alt} style={mediaStyle(card.media, 'cover')} />
-          <div className="pc-veil pc-veil-strong" />
-        </div>
-      )}
+      {card.media && <Beeld media={card.media} theme={theme} veil="strong" />}
       <div className="pc-inner pc-middle">
         <Meta datum={datum} theme={theme} />
         <blockquote className="pc-quotetext">
           <span className="pc-quotemark" style={{ color: theme.accent }} aria-hidden="true">
             “
           </span>
-          {card.body || card.title}
+          {card.body ? (
+            <span dangerouslySetInnerHTML={{ __html: sanitizeRich(card.body) }} />
+          ) : (
+            card.title
+          )}
         </blockquote>
-        {card.quoteAttribution && (
-          <p className="pc-attrib">{card.quoteAttribution}</p>
-        )}
+        {card.quoteAttribution && <p className="pc-attrib">{card.quoteAttribution}</p>}
         <Credit card={card} />
       </div>
     </article>
@@ -163,11 +151,14 @@ function GraphicCard({ card, theme, datum }: { card: Card; theme: Theme; datum: 
         {card.media ? (
           <div className="pc-graphicframe">
             {/* 'contain': een grafiek mag nooit bijgesneden worden. */}
-            <img
-              src={card.media.src}
-              alt={card.media.alt}
-              style={mediaStyle(card.media, 'contain')}
-            />
+            <div className="pc-mediabox">
+              <img
+                src={card.media.src}
+                alt={card.media.alt}
+                style={mediaStyle(card.media, 'contain')}
+              />
+              <Aanwijzers annotations={card.media.annotations} theme={theme} />
+            </div>
           </div>
         ) : (
           <Empty theme={theme} />
@@ -175,6 +166,94 @@ function GraphicCard({ card, theme, datum }: { card: Card; theme: Theme; datum: 
         <Credit card={card} />
       </div>
     </article>
+  )
+}
+
+/**
+ * De foto met zijn sluier en zijn tekstballonnen.
+ *
+ * De sluier wordt getint met de achtergrondkleur van het thema in plaats van
+ * met zwart. Daardoor zie je een kleurwijziging meteen terug op elke kaart, ook
+ * op kaarten die helemaal met beeld gevuld zijn.
+ */
+function Beeld({
+  media,
+  theme,
+  veil,
+  ingekaderd,
+}: {
+  media: Media
+  theme: Theme
+  veil: 'none' | 'soft' | 'strong'
+  ingekaderd?: boolean
+}) {
+  return (
+    <div className={ingekaderd ? 'pc-framed' : 'pc-bleed'}>
+      <img src={media.src} alt={media.alt} style={mediaStyle(media, 'cover')} />
+      {veil !== 'none' && (
+        <div className={`pc-veil ${veil === 'strong' ? 'pc-veil-strong' : ''}`} />
+      )}
+      <Aanwijzers annotations={media.annotations} theme={theme} />
+    </div>
+  )
+}
+
+/**
+ * Tekstballonnen met een verbindingslijn naar een punt in het beeld.
+ *
+ * De ballon springt vanzelf naar de andere kant als het punt in de rechterhelft
+ * ligt; anders loopt hij het beeld uit. Dat scheelt de redacteur een keuze die
+ * toch altijd hetzelfde antwoord heeft.
+ */
+function Aanwijzers({ annotations, theme }: { annotations: Annotation[]; theme: Theme }) {
+  if (annotations.length === 0) return null
+  const extra = afgeleid(theme)
+
+  return (
+    <div className="an-laag">
+      {annotations.map((a, i) => {
+        const naarLinks = a.x > 0.55
+        return (
+          <div
+            key={a.id}
+            className={`an ${naarLinks ? 'is-left' : 'is-right'} ${
+              a.reveal === 'hover' ? 'is-hover' : ''
+            }`}
+            style={{ left: `${a.x * 100}%`, top: `${a.y * 100}%` }}
+            tabIndex={a.reveal === 'hover' ? 0 : -1}
+            aria-label={a.reveal === 'hover' ? a.text : undefined}
+          >
+            <span className="an-punt" style={{ borderColor: theme.accent }}>
+              <span className="an-kern" style={{ background: theme.accent }} />
+            </span>
+            {a.text && (
+              <span
+                className="an-ballon"
+                style={{
+                  background: theme.background,
+                  color: theme.text,
+                  borderColor: extra.axisLine,
+                }}
+              >
+                <span className="an-lijn" style={{ background: theme.accent }} aria-hidden="true" />
+                {a.text}
+              </span>
+            )}
+            {a.reveal === 'hover' && !a.text && <span className="sr-only">Aanwijzer {i + 1}</span>}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function Body({ html, lead }: { html: string; lead?: boolean }) {
+  if (!html) return null
+  return (
+    <p
+      className={`pc-body ${lead ? 'pc-body-lead' : ''}`}
+      dangerouslySetInnerHTML={{ __html: sanitizeRich(html) }}
+    />
   )
 }
 
@@ -195,8 +274,9 @@ function Credit({ card }: { card: Card }) {
 }
 
 function Empty({ theme }: { theme: Theme }) {
+  const extra = afgeleid(theme)
   return (
-    <p className="pc-empty" style={{ borderColor: theme.axisLine, color: theme.textMuted }}>
+    <p className="pc-empty" style={{ borderColor: extra.axisLine, color: extra.textMuted }}>
       Nog geen beeld gekozen
     </p>
   )

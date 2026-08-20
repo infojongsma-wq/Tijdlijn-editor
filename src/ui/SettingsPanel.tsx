@@ -1,7 +1,15 @@
 import type { AxisPosition, Settings, Theme, TimelineForm } from '../model/types'
-import { OOST_THEME, OOST_THEME_LIGHT } from '../model/doc'
+import {
+  ACHTERGRONDEN,
+  PRESETS,
+  SECUNDAIR,
+  TEKSTKLEUREN,
+  afgeleid,
+  tekstVoor,
+  type Swatch,
+} from '../model/palette'
 import { contrastRatio, contrastVerdict } from '../model/contrast'
-import { Button, ColorInput, Field, Segmented, Toggle } from './controls'
+import { Field, Segmented, Toggle } from './controls'
 
 interface Props {
   settings: Settings
@@ -28,10 +36,9 @@ const ASSEN: { value: AxisPosition; label: string; title: string }[] = [
 ]
 
 export function SettingsPanel({ settings, theme, onSettings, onTheme }: Props) {
-  const tekstRatio = contrastRatio(theme.text, theme.background)
-  const tekstOordeel = contrastVerdict(tekstRatio)
-  const accentRatio = contrastRatio(theme.accent, theme.background)
-  const accentOordeel = contrastVerdict(accentRatio)
+  const tekstOordeel = contrastVerdict(contrastRatio(theme.text, theme.background))
+  const accentOordeel = contrastVerdict(contrastRatio(theme.accent, theme.background))
+  const extra = afgeleid(theme)
 
   return (
     <div className="settings">
@@ -106,28 +113,68 @@ export function SettingsPanel({ settings, theme, onSettings, onTheme }: Props) {
 
       <section className="settings-block">
         <h3 className="panel-h3">Kleuren</h3>
-        <div className="settings-presets">
-          <Button onClick={() => onTheme({ ...OOST_THEME })}>Oost donker</Button>
-          <Button onClick={() => onTheme({ ...OOST_THEME_LIGHT })}>Oost licht</Button>
-        </div>
 
-        <ColorInput
+        <Field group label="Sjabloon">
+          <div className="presetrij">
+            {PRESETS.map((p) => {
+              const actief =
+                p.thema.background === theme.background &&
+                p.thema.text === theme.text &&
+                p.thema.accent === theme.accent
+              return (
+                <button
+                  key={p.naam}
+                  type="button"
+                  className={`preset ${actief ? 'is-on' : ''}`}
+                  onClick={() => onTheme({ ...p.thema })}
+                  aria-pressed={actief}
+                  style={{
+                    background: p.thema.background,
+                    color: p.thema.text,
+                    borderColor: afgeleid(p.thema).axisLine,
+                  }}
+                >
+                  <span className="preset-stip" style={{ background: p.thema.accent }} />
+                  {p.naam}
+                </button>
+              )
+            })}
+          </div>
+        </Field>
+
+        <Stalen
           label="Achtergrond"
-          value={theme.background}
-          onChange={(v) => onTheme({ background: v })}
+          waarde={theme.background}
+          stalen={ACHTERGRONDEN}
+          onKies={(hex) =>
+            // De tekstkleur meeschakelen: een lichte achtergrond met witte tekst
+            // is nooit de bedoeling, en handmatig nabijstellen is een extra stap
+            // die niemand mist.
+            onTheme({ background: hex, text: tekstVoor(hex) })
+          }
         />
-        <ColorInput label="Tekst" value={theme.text} onChange={(v) => onTheme({ text: v })} />
-        <ColorInput
-          label="Zachte tekst"
-          value={theme.textMuted}
-          onChange={(v) => onTheme({ textMuted: v })}
+
+        <Stalen
+          label="Tekst"
+          waarde={theme.text}
+          stalen={TEKSTKLEUREN}
+          onKies={(hex) => onTheme({ text: hex })}
         />
-        <ColorInput label="Accent" value={theme.accent} onChange={(v) => onTheme({ accent: v })} />
-        <ColorInput
-          label="Lijn van de as"
-          value={theme.axisLine}
-          onChange={(v) => onTheme({ axisLine: v })}
+
+        <Stalen
+          label="Accent"
+          hint="De stip bij de datum, de as en de voortgangsbalk."
+          waarde={theme.accent}
+          stalen={SECUNDAIR}
+          onKies={(hex) => onTheme({ accent: hex })}
         />
+
+        <div className="afgeleid">
+          <span className="afgeleid-label">Hieruit berekend</span>
+          <span className="afgeleid-staal" style={{ background: extra.textMuted }} title="Zachte tekst" />
+          <span className="afgeleid-staal" style={{ background: extra.axisLine }} title="Lijn van de as" />
+          <span className="afgeleid-tekst">zachte tekst en de lijn van de as</span>
+        </div>
 
         <p className={`msg msg-${tekstOordeel.level === 'ok' ? 'info' : 'warn'}`}>
           Tekst op achtergrond: {tekstOordeel.text}
@@ -137,5 +184,40 @@ export function SettingsPanel({ settings, theme, onSettings, onTheme }: Props) {
         </p>
       </section>
     </div>
+  )
+}
+
+/** Een rij kleurstalen uit de huisstijl. Geen vrije kiezer: een tijdlijn hoort
+ *  herkenbaar van RTV Oost te zijn. */
+function Stalen({
+  label,
+  hint,
+  waarde,
+  stalen,
+  onKies,
+}: {
+  label: string
+  hint?: string
+  waarde: string
+  stalen: Swatch[]
+  onKies: (hex: string) => void
+}) {
+  return (
+    <Field group label={label} hint={hint}>
+      <div className="stalen">
+        {stalen.map((s) => (
+          <button
+            key={s.hex}
+            type="button"
+            className={`staal ${s.hex.toLowerCase() === waarde.toLowerCase() ? 'is-on' : ''}`}
+            style={{ background: s.hex }}
+            onClick={() => onKies(s.hex)}
+            title={`${s.naam} · ${s.hex}`}
+            aria-label={s.naam}
+            aria-pressed={s.hex.toLowerCase() === waarde.toLowerCase()}
+          />
+        ))}
+      </div>
+    </Field>
   )
 }

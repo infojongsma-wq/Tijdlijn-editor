@@ -1,33 +1,16 @@
 import {
   DOC_VERSION,
   DEFAULT_ADJUST,
+  type Annotation,
   type Card,
   type CardType,
   type PartialDate,
   type Settings,
-  type Theme,
   type TimelineDoc,
 } from './types'
 import { buildDate, sortKey } from './dates'
-
-/** RTV Oost-huisstijl als vertrekpunt. Alles hierin is aanpasbaar in de editor. */
-export const OOST_THEME: Theme = {
-  background: '#131720', // Oost Donkerblauw
-  text: '#FFFFFF',
-  textMuted: '#B9C2D4',
-  accent: '#1361FF', // Oost Blauw
-  axisLine: '#3A4457',
-  onAccent: '#FFFFFF',
-}
-
-export const OOST_THEME_LIGHT: Theme = {
-  background: '#FFFFFF',
-  text: '#131720',
-  textMuted: '#4A5468',
-  accent: '#1361FF',
-  axisLine: '#C8D5EC',
-  onAccent: '#FFFFFF',
-}
+import { THEMA_DONKER } from './palette'
+import { isHtml, sanitizeRich, tekstNaarHtml } from './richtext'
 
 export const DEFAULT_SETTINGS: Settings = {
   form: 'vertical',
@@ -63,7 +46,7 @@ export function emptyDoc(name = 'Naamloze tijdlijn'): TimelineDoc {
     version: DOC_VERSION,
     name,
     settings: { ...DEFAULT_SETTINGS },
-    theme: { ...OOST_THEME },
+    theme: { ...THEMA_DONKER },
     cards: [],
   }
 }
@@ -152,6 +135,7 @@ function normaliseCard(raw: unknown): Card {
         caption: String(input.media.caption ?? ''),
         credit: String(input.media.credit ?? ''),
         adjust: { ...DEFAULT_ADJUST, ...(input.media.adjust ?? {}) },
+        annotations: normaliseAnnotations(input.media.annotations),
       }
     : null
 
@@ -160,8 +144,34 @@ function normaliseCard(raw: unknown): Card {
     ...input,
     id: input.id ?? basis.id,
     date: normaliseDate(input.date) ?? basis.date,
+    // Oudere bestanden bewaarden de tekst zonder opmaak; die wordt hier omgezet
+    // zodat er niets verloren gaat en er niets ongefilterds binnenkomt.
+    body: leesTekst(input.body),
     media,
   }
+}
+
+function leesTekst(waarde: unknown): string {
+  if (typeof waarde !== 'string' || waarde === '') return ''
+  return isHtml(waarde) ? sanitizeRich(waarde) : tekstNaarHtml(waarde)
+}
+
+function normaliseAnnotations(raw: unknown): Annotation[] {
+  if (!Array.isArray(raw)) return []
+  return raw.flatMap((item): Annotation[] => {
+    if (!item || typeof item !== 'object') return []
+    const a = item as Partial<Annotation>
+    if (typeof a.x !== 'number' || typeof a.y !== 'number') return []
+    return [
+      {
+        id: typeof a.id === 'string' ? a.id : newId(),
+        x: Math.min(1, Math.max(0, a.x)),
+        y: Math.min(1, Math.max(0, a.y)),
+        text: typeof a.text === 'string' ? a.text : '',
+        reveal: a.reveal === 'hover' ? 'hover' : 'always',
+      },
+    ]
+  })
 }
 
 /**

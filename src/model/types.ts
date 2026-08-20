@@ -66,6 +66,28 @@ export const DEFAULT_ADJUST: MediaAdjust = {
   saturation: 100,
 }
 
+/**
+ * Een aanwijzer op een afbeelding: een punt met een tekstballon eraan, verbonden
+ * door een lijntje.
+ *
+ * Het ankerpunt staat in fracties van de afbeelding, niet in pixels. Daardoor
+ * blijft de aanwijzer op de juiste plek als de foto op een telefoon veel kleiner
+ * wordt getoond, en ook als je later inzoomt of de uitsnede verschuift.
+ *
+ * Ditzelfde mechanisme dient straks voor de interactieve kaart van Overijssel en
+ * voor aanwijzers op een grafiek: één punt, met inhoud eraan gekoppeld.
+ */
+export interface Annotation {
+  id: string
+  /** 0-1, fractie van links. */
+  x: number
+  /** 0-1, fractie van boven. */
+  y: number
+  text: string
+  /** Meteen zichtbaar, of pas bij aanwijzen en aantikken. */
+  reveal: 'always' | 'hover'
+}
+
 export interface Media {
   /** data:-URL. Afbeeldingen zitten in het document zelf; er is geen beeldbank. */
   src: string
@@ -79,6 +101,8 @@ export interface Media {
   /** Apart veld — in de bron zitten bijschrift en rechten aan elkaar geplakt. */
   credit: string
   adjust: MediaAdjust
+  /** Tekstballonnen met een verbindingslijn naar een punt in de foto. */
+  annotations: Annotation[]
 }
 
 export interface Card {
@@ -110,14 +134,18 @@ export type AxisPosition = 'left' | 'right' | 'top' | 'bottom' | 'hidden'
 
 export type SortDirection = 'asc' | 'desc'
 
+/**
+ * De kleuren van een tijdlijn.
+ *
+ * Bewust klein gehouden: achtergrond, tekst en accent kies je, de rest wordt
+ * daaruit berekend. Een zachte tekstkleur die je los kunt instellen levert
+ * vooral onleesbare combinaties op, en de as hoort sowieso bij de achtergrond
+ * te passen.
+ */
 export interface Theme {
   background: string
   text: string
-  textMuted: string
   accent: string
-  axisLine: string
-  /** Tekst op een gekleurd vlak (knoppen, tags). */
-  onAccent: string
 }
 
 export interface Settings {

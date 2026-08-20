@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { DEFAULT_ADJUST, type Media } from '../model/types'
+import { DEFAULT_ADJUST, type Annotation, type Media } from '../model/types'
 import {
   ACCEPTED,
   dataUrlBytes,
@@ -7,7 +7,8 @@ import {
   importImage,
   type ImageWarning,
 } from '../model/image'
-import { Button, Field, Slider, TextArea, TextInput } from './controls'
+import { newId } from '../model/doc'
+import { Button, Field, Slider, TextArea, TextInput, Toggle } from './controls'
 
 interface Props {
   media: Media | null
@@ -28,6 +29,7 @@ export function ImageField({ media, onChange, cropped }: Props) {
   const [meldingen, setMeldingen] = useState<ImageWarning[]>([])
   const [fout, setFout] = useState<string | null>(null)
   const [toonUitsnede, setToonUitsnede] = useState(false)
+  const [actieveAanwijzer, setActieveAanwijzer] = useState<string | null>(null)
   const invoerRef = useRef<HTMLInputElement>(null)
 
   const kies = useCallback(
@@ -37,13 +39,14 @@ export function ImageField({ media, onChange, cropped }: Props) {
       setBezig(true)
       try {
         const resultaat = await importImage(file)
-        // Bijschrift, rechten en alt overnemen als er al iets stond: je vervangt
-        // meestal de foto, niet de verantwoording eromheen.
+        // Bijschrift, rechten, alt en aanwijzers overnemen als er al iets stond:
+        // je vervangt meestal de foto, niet de verantwoording eromheen.
         if (media) {
           resultaat.media.alt = media.alt
           resultaat.media.caption = media.caption
           resultaat.media.credit = media.credit
           resultaat.media.adjust = { ...media.adjust }
+          resultaat.media.annotations = media.annotations
         }
         setMeldingen(resultaat.warnings)
         onChange(resultaat.media, 'beeld')
@@ -61,6 +64,14 @@ export function ImageField({ media, onChange, cropped }: Props) {
     (patch: Partial<Media['adjust']>, label: string) => {
       if (!media) return
       onChange({ ...media, adjust: { ...media.adjust, ...patch } }, label)
+    },
+    [media, onChange],
+  )
+
+  const zetAanwijzers = useCallback(
+    (annotations: Annotation[], label: string) => {
+      if (!media) return
+      onChange({ ...media, annotations }, label)
     },
     [media, onChange],
   )
@@ -100,7 +111,15 @@ export function ImageField({ media, onChange, cropped }: Props) {
         media={media}
         interactief={cropped}
         toonUitsnede={cropped && toonUitsnede}
+        actieveAanwijzer={actieveAanwijzer}
         onFocal={(x, y) => pasAan({ focalX: x, focalY: y }, 'brandpunt')}
+        onAanwijzer={(id, x, y) => {
+          setActieveAanwijzer(id)
+          zetAanwijzers(
+            media.annotations.map((a) => (a.id === id ? { ...a, x, y } : a)),
+            `aanwijzer:${id}`,
+          )
+        }}
       />
 
       <div className="imgfield-bar">
@@ -114,7 +133,7 @@ export function ImageField({ media, onChange, cropped }: Props) {
               onClick={() => setToonUitsnede((v) => !v)}
               title="Toont wat er op een staand telefoonscherm overblijft"
             >
-              {toonUitsnede ? 'Verberg uitsnede' : 'Toon uitsnede mobiel'}
+              {toonUitsnede ? 'Verberg uitsnede' : 'Uitsnede mobiel'}
             </Button>
           )}
           <Button onClick={() => invoerRef.current?.click()}>Vervang</Button>
@@ -137,6 +156,13 @@ export function ImageField({ media, onChange, cropped }: Props) {
         </p>
       ))}
       {fout && <p className="msg msg-error">{fout}</p>}
+
+      <Aanwijzers
+        annotations={media.annotations}
+        actief={actieveAanwijzer}
+        onActief={setActieveAanwijzer}
+        onWijzig={zetAanwijzers}
+      />
 
       <div className="imgfield-sliders">
         {cropped && (
@@ -229,43 +255,160 @@ export function ImageField({ media, onChange, cropped }: Props) {
 }
 
 /**
+ * De lijst met tekstballonnen bij deze foto.
+ *
+ * Ditzelfde mechanisme dient straks voor een aanklikbare kaart van Overijssel en
+ * voor toelichtingen op een grafiek: het is steeds een punt met inhoud eraan.
+ */
+function Aanwijzers({
+  annotations,
+  actief,
+  onActief,
+  onWijzig,
+}: {
+  annotations: Annotation[]
+  actief: string | null
+  onActief: (id: string | null) => void
+  onWijzig: (a: Annotation[], label: string) => void
+}) {
+  const voegToe = () => {
+    const nieuw: Annotation = {
+      id: newId(),
+      // Iets links van het midden, zodat de ballon er meteen naast past.
+      x: 0.38,
+      y: 0.5,
+      text: '',
+      reveal: 'always',
+    }
+    onActief(nieuw.id)
+    onWijzig([...annotations, nieuw], 'aanwijzer-toevoegen')
+  }
+
+  return (
+    <div className="anlist">
+      <div className="anlist-head">
+        <span className="anlist-title">Tekstballonnen</span>
+        <Button onClick={voegToe} title="Een punt op de foto met een tekstje eraan">
+          + Toevoegen
+        </Button>
+      </div>
+
+      {annotations.length === 0 ? (
+        <p className="anlist-leeg">
+          Zet een punt op de foto met een tekstje ernaast, verbonden door een
+          lijntje — om iets uit te lichten of te benoemen.
+        </p>
+      ) : (
+        <ol className="anlist-items">
+          {annotations.map((a, i) => (
+            <li key={a.id} className={a.id === actief ? 'is-active' : ''}>
+              <div className="anitem-top">
+                <span className="anitem-nr">{i + 1}</span>
+                <TextInput
+                  value={a.text}
+                  placeholder="Waar wijs je naar?"
+                  onFocus={() => onActief(a.id)}
+                  onChange={(v) =>
+                    onWijzig(
+                      annotations.map((x) => (x.id === a.id ? { ...x, text: v } : x)),
+                      `aanwijzer-tekst:${a.id}`,
+                    )
+                  }
+                />
+                <button
+                  type="button"
+                  className="anitem-del"
+                  title="Deze tekstballon verwijderen"
+                  aria-label={`Tekstballon ${i + 1} verwijderen`}
+                  onClick={() =>
+                    onWijzig(
+                      annotations.filter((x) => x.id !== a.id),
+                      'aanwijzer-verwijderen',
+                    )
+                  }
+                >
+                  ×
+                </button>
+              </div>
+              <Toggle
+                label="Pas tonen bij aanwijzen"
+                checked={a.reveal === 'hover'}
+                onChange={(v) =>
+                  onWijzig(
+                    annotations.map((x) =>
+                      x.id === a.id ? { ...x, reveal: v ? 'hover' : 'always' } : x,
+                    ),
+                    `aanwijzer-tonen:${a.id}`,
+                  )
+                }
+              />
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  )
+}
+
+/**
  * Het brandpunt bepaalt wat er in beeld blijft als de foto wordt bijgesneden.
  * Je sleept het punt naar wat er hoe dan ook te zien moet zijn — meestal een
  * gezicht. Het wordt bewaard als fractie, dus het klopt op elk schermformaat.
+ *
+ * In hetzelfde kader sleep je de tekstballonnen naar hun plek.
  */
 function FocalPicker({
   media,
   interactief,
   toonUitsnede,
+  actieveAanwijzer,
   onFocal,
+  onAanwijzer,
 }: {
   media: Media
   interactief: boolean
   toonUitsnede: boolean
+  actieveAanwijzer: string | null
   onFocal: (x: number, y: number) => void
+  onAanwijzer: (id: string, x: number, y: number) => void
 }) {
   const vlakRef = useRef<HTMLDivElement>(null)
+  const sleept = useRef<string | null>(null)
 
-  const verplaats = useCallback(
-    (clientX: number, clientY: number) => {
-      const vlak = vlakRef.current
-      if (!vlak) return
-      const r = vlak.getBoundingClientRect()
-      const x = Math.min(1, Math.max(0, (clientX - r.left) / r.width))
-      const y = Math.min(1, Math.max(0, (clientY - r.top) / r.height))
-      onFocal(Number(x.toFixed(4)), Number(y.toFixed(4)))
-    },
-    [onFocal],
-  )
+  const fractie = useCallback((clientX: number, clientY: number) => {
+    const vlak = vlakRef.current
+    if (!vlak) return null
+    const r = vlak.getBoundingClientRect()
+    return {
+      x: Number(Math.min(1, Math.max(0, (clientX - r.left) / r.width)).toFixed(4)),
+      y: Number(Math.min(1, Math.max(0, (clientY - r.top) / r.height)).toFixed(4)),
+    }
+  }, [])
 
   const opPointerDown = (e: React.PointerEvent) => {
-    if (!interactief) return
+    const doel = (e.target as HTMLElement).closest('[data-aanwijzer]')
+    const id = doel?.getAttribute('data-aanwijzer') ?? null
+
+    if (!id && !interactief) return
     e.currentTarget.setPointerCapture(e.pointerId)
-    verplaats(e.clientX, e.clientY)
+    sleept.current = id ?? 'focal'
+
+    const f = fractie(e.clientX, e.clientY)
+    if (!f) return
+    if (id) onAanwijzer(id, f.x, f.y)
+    else onFocal(f.x, f.y)
   }
+
   const opPointerMove = (e: React.PointerEvent) => {
-    if (!interactief || e.buttons === 0) return
-    verplaats(e.clientX, e.clientY)
+    if (!sleept.current || e.buttons === 0) return
+    const f = fractie(e.clientX, e.clientY)
+    if (!f) return
+    if (sleept.current === 'focal') onFocal(f.x, f.y)
+    else onAanwijzer(sleept.current, f.x, f.y)
+  }
+
+  const opPointerUp = () => {
+    sleept.current = null
   }
 
   const opToets = (e: React.KeyboardEvent) => {
@@ -296,6 +439,7 @@ function FocalPicker({
     aspectRatio: `${beeldVerhouding}`,
     maxWidth: `${Math.round(MAX_PREVIEW_HOOGTE * beeldVerhouding)}px`,
   }
+
   // Bij 'cover' op een staand scherm blijft hiervan horizontaal maar een strook over.
   const strookBreedte = Math.min(1, MOBIEL / beeldVerhouding)
   const strookLinks = Math.min(
@@ -309,6 +453,8 @@ function FocalPicker({
       ref={vlakRef}
       onPointerDown={opPointerDown}
       onPointerMove={opPointerMove}
+      onPointerUp={opPointerUp}
+      onPointerCancel={opPointerUp}
       onKeyDown={opToets}
       style={kaderStijl}
       tabIndex={interactief ? 0 : -1}
@@ -350,6 +496,18 @@ function FocalPicker({
           }}
         />
       )}
+
+      {media.annotations.map((a, i) => (
+        <span
+          key={a.id}
+          data-aanwijzer={a.id}
+          className={`focal-an ${a.id === actieveAanwijzer ? 'is-active' : ''}`}
+          style={{ left: `${a.x * 100}%`, top: `${a.y * 100}%` }}
+          title={a.text || `Tekstballon ${i + 1}`}
+        >
+          {i + 1}
+        </span>
+      ))}
     </div>
   )
 }

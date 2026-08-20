@@ -118,6 +118,7 @@ function makeMedia(src: string, mime: string, width: number, height: number): Me
     caption: '',
     credit: '',
     adjust: { ...DEFAULT_ADJUST },
+    annotations: [],
   }
 }
 

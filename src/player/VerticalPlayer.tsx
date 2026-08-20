@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Card, Settings, Theme } from '../model/types'
+import { rgba } from '../model/palette'
 import { CardView } from './CardView'
 import { Axis } from './Axis'
 
@@ -13,6 +14,8 @@ interface Props {
   showTime: boolean[]
   settings: Settings
   theme: Theme
+  /** Selectie in de editor: hier springt de speler naartoe. */
+  focusCardId?: string | null
 }
 
 const MemoCard = memo(CardView)
@@ -38,6 +41,7 @@ export function VerticalPlayer({
   showTime,
   settings,
   theme,
+  focusCardId,
 }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const [hoogte, setHoogte] = useState(0)
@@ -102,6 +106,22 @@ export function VerticalPlayer({
     [hoogte, aantal],
   )
 
+  // Kiest de redacteur links een moment, dan hoort de voorvertoning die kaart
+  // te tonen — anders zit je blind te typen aan iets dat niet in beeld staat.
+  const laatsteFocus = useRef<string | null>(null)
+  useEffect(() => {
+    if (!focusCardId || hoogte === 0) return
+    if (laatsteFocus.current === focusCardId) return
+    laatsteFocus.current = focusCardId
+    const index = cards.findIndex((c) => c.id === focusCardId)
+    if (index < 0) return
+    const el = scrollerRef.current
+    if (!el) return
+    // Zonder vloeiend schuiven: bij het doorklikken door een lijst wil je er
+    // meteen zijn, niet acht keer een animatie afwachten.
+    el.scrollTo({ top: index * hoogte, behavior: 'auto' })
+  }, [focusCardId, hoogte, cards])
+
   const opToets = useCallback(
     (e: React.KeyboardEvent) => {
       const huidig = Math.round(progress)
@@ -142,7 +162,17 @@ export function VerticalPlayer({
   return (
     <div
       className={`vp vp-axis-${settings.axis}`}
-      style={{ background: theme.background, color: theme.text }}
+      style={{
+        background: theme.background,
+        color: theme.text,
+        // De sluier over foto's krijgt de achtergrondkleur mee, zodat een
+        // kleurwijziging meteen op élke kaart te zien is en niet alleen op
+        // kaarten zonder beeld.
+        ['--veil-1' as string]: rgba(theme.background, 0.86),
+        ['--veil-2' as string]: rgba(theme.background, 0.6),
+        ['--veil-3' as string]: rgba(theme.background, 0.12),
+        ['--veil-4' as string]: rgba(theme.background, 0),
+      }}
     >
       <div
         className="vp-scroller"

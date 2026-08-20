@@ -2,11 +2,15 @@ import { useMemo } from 'react'
 import type { TimelineDoc } from '../model/types'
 import { orderedCards } from '../model/doc'
 import { axisLabels as maakAsLabels, sameDay } from '../model/dates'
+import { afgeleid } from '../model/palette'
 import { VerticalPlayer } from './VerticalPlayer'
 import '../styles/player.css'
 
 interface Props {
   doc: TimelineDoc
+  /** De kaart die in de editor geselecteerd is; de speler springt ernaartoe
+   *  zodat je meteen ziet wat je aan het bewerken bent. */
+  focusCardId?: string | null
 }
 
 /**
@@ -16,7 +20,7 @@ interface Props {
  * verticaal scrollen af; de overige vijf vormen krijgen dezelfde kaarten en
  * dezelfde as, maar een andere opmaak eromheen.
  */
-export function Player({ doc }: Props) {
+export function Player({ doc, focusCardId }: Props) {
   const { cards, asLabels, asIndex, showTime } = useMemo(() => {
     const gesorteerd = orderedCards(doc)
 
@@ -43,7 +47,7 @@ export function Player({ doc }: Props) {
     return (
       <div
         className="vp vp-empty"
-        style={{ background: doc.theme.background, color: doc.theme.textMuted }}
+        style={{ background: doc.theme.background, color: afgeleid(doc.theme).textMuted }}
       >
         <p>Nog geen kaarten. Voeg links een moment toe.</p>
       </div>
@@ -61,6 +65,7 @@ export function Player({ doc }: Props) {
           showTime={showTime}
           settings={doc.settings}
           theme={doc.theme}
+          focusCardId={focusCardId}
         />
       )
   }

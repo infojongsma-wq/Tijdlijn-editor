@@ -1,4 +1,4 @@
-import { DEFAULT_ADJUST, type Card, type TimelineDoc } from './types'
+import { DEFAULT_ADJUST, type Annotation, type Card, type TimelineDoc } from './types'
 import { buildDate } from './dates'
 import { emptyDoc, newId } from './doc'
 
@@ -33,6 +33,7 @@ interface Bron {
   subtitle?: string
   textPlacement?: Card['textPlacement']
   source?: string
+  annotations?: Annotation[]
 }
 
 const BRONNEN: Bron[] = [
@@ -79,6 +80,10 @@ const BRONNEN: Bron[] = [
     credit: 'Oost / Ingestuurd',
     textPlacement: 'below',
     source: 'RTV Oost',
+    annotations: [
+      { id: 'demo-wolf', x: 0.34, y: 0.5, text: 'De wolf, gefilmd door een omwonende', reveal: 'always' },
+      { id: 'demo-n347', x: 0.68, y: 0.52, text: 'De N347, waar het dier zou zijn doodgereden', reveal: 'hover' },
+    ],
   },
   {
     type: 'image-text',
@@ -188,6 +193,7 @@ function toCard(bron: Bron): Card {
           caption: bron.caption ?? '',
           credit: bron.credit ?? '',
           adjust: { ...DEFAULT_ADJUST },
+          annotations: bron.annotations ?? [],
         }
       : null,
   }

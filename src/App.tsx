@@ -240,7 +240,7 @@ export function App() {
         </aside>
 
         <main className="stage">
-          <Preview doc={doc} />
+          <Preview doc={doc} focusCardId={selected?.id ?? null} />
         </main>
 
         <aside className="panel panel-right">
