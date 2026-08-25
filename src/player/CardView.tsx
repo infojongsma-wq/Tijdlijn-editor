@@ -326,8 +326,11 @@ function Aanwijzers({
     return () => observer.disconnect()
   }, [])
 
+  // De laag wordt óók zonder ballonnen opgebouwd (hij vangt geen muis en kost
+  // niets). Zou hij pas verschijnen bij de eerste ballon, dan heeft de meting
+  // hierboven — die maar één keer start — nooit een element gehad om te meten,
+  // en blijft elke later toegevoegde ballon onzichtbaar.
   const annotations = media.annotations
-  if (annotations.length === 0) return null
   const extra = afgeleid(theme)
 
   return (
