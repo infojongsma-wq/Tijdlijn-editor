@@ -48,6 +48,25 @@ publiceren.
 - **Opslaan en openen** — als bestand op je eigen computer (Ctrl+S). Tussentijds
   bewaart de editor automatisch, zodat een dichtgeklapte laptop niets kost.
 
+## Online zetten met Vercel
+
+De editor is een gewone statische site: geen server, geen database, geen
+omgevingsvariabelen. `vercel.json` staat klaar met de juiste instellingen
+(Vite, build naar `dist/`, alle paden terug naar `index.html`).
+
+1. Ga naar [vercel.com/new](https://vercel.com/new) en kies deze repository.
+2. Vercel herkent Vite zelf; de instellingen uit `vercel.json` worden gebruikt.
+   Er hoeft niets ingevuld te worden.
+3. Klik op **Deploy**.
+
+Vanaf dan levert elke push naar `main` een nieuwe versie op, en krijgt elke
+pull request een eigen voorbeeldlink.
+
+Let op: de editor bewaart tijdlijnen als bestand op je eigen computer, niet op
+de server. Iedereen die de link opent, begint met een leeg document. Voor een
+gedeelde bibliotheek is de database nodig die we later met een ICT-collega
+bouwen.
+
 ## Openen zonder iets te installeren
 
 Download `dist-singlefile/index.html` en open het met een dubbelklik. Alles zit

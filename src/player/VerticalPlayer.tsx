@@ -183,6 +183,8 @@ export function VerticalPlayer({
         ['--ax-veil-1' as string]: rgba(theme.background, 0.55),
         ['--ax-veil-0' as string]: rgba(theme.background, 0),
         ['--ax-shadow' as string]: rgba(theme.background, 0.9),
+        // Achtergrond van het datumchipje op smalle schermen.
+        ['--ax-chip' as string]: rgba(theme.background, 0.82),
       }}
     >
       <div

@@ -7,12 +7,13 @@ import { demoDoc } from './model/demo'
 import { CardList } from './ui/CardList'
 import { CardForm } from './ui/CardForm'
 import { SettingsPanel } from './ui/SettingsPanel'
+import { CardStylePanel } from './ui/CardStylePanel'
 import { Preview } from './ui/Preview'
 import { Player } from './player/Player'
 import { Button } from './ui/controls'
 import './styles/app.css'
 
-type Tab = 'moment' | 'instellingen'
+type Tab = 'inhoud' | 'kaart' | 'tijdlijn'
 
 export function App() {
   const bewaard = useRef(loadAutosave()).current
@@ -22,7 +23,7 @@ export function App() {
   const [selectedId, setSelectedId] = useState<string | null>(
     () => (bewaard?.cards[0]?.id ?? null),
   )
-  const [tab, setTab] = useState<Tab>('moment')
+  const [tab, setTab] = useState<Tab>('inhoud')
   const [bekijk, setBekijk] = useState(false)
   const [melding, setMelding] = useState<string | null>(null)
   const bestandRef = useRef<HTMLInputElement>(null)
@@ -90,7 +91,7 @@ export function App() {
     const kaart = emptyCard(doc.cards.length === 0 ? 'title' : 'image-text')
     history.set((huidig) => ({ ...huidig, cards: [...huidig.cards, kaart] }))
     setSelectedId(kaart.id)
-    setTab('moment')
+    setTab('inhoud')
   }, [history, doc.cards.length])
 
   const verwijder = useCallback(
@@ -324,7 +325,7 @@ export function App() {
             selectedId={selected?.id ?? null}
             onSelect={(id) => {
               setSelectedId(id)
-              setTab('moment')
+              if (tab === 'tijdlijn') setTab('inhoud')
             }}
             onAdd={voegToe}
             onDelete={verwijder}
@@ -341,35 +342,49 @@ export function App() {
           <div className="tabs" role="group" aria-label="Paneelkeuze">
             <button
               type="button"
-              aria-pressed={tab === 'moment'}
-              className={tab === 'moment' ? 'is-on' : ''}
-              onClick={() => setTab('moment')}
+              aria-pressed={tab === 'inhoud'}
+              className={tab === 'inhoud' ? 'is-on' : ''}
+              onClick={() => setTab('inhoud')}
+              title="Wat er op deze kaart staat"
             >
-              Dit moment
+              Inhoud
             </button>
             <button
               type="button"
-              aria-pressed={tab === 'instellingen'}
-              className={tab === 'instellingen' ? 'is-on' : ''}
-              onClick={() => setTab('instellingen')}
+              aria-pressed={tab === 'kaart'}
+              className={tab === 'kaart' ? 'is-on' : ''}
+              onClick={() => setTab('kaart')}
+              title="Vormgeving van alleen deze kaart"
             >
-              Vormgeving
+              Kaart
+            </button>
+            <button
+              type="button"
+              aria-pressed={tab === 'tijdlijn'}
+              className={tab === 'tijdlijn' ? 'is-on' : ''}
+              onClick={() => setTab('tijdlijn')}
+              title="Instellingen voor de hele tijdlijn"
+            >
+              Tijdlijn
             </button>
           </div>
 
           <div className="panel-scroll">
-            {tab === 'moment' ? (
-              selected ? (
+            {tab === 'inhoud' &&
+              (selected ? (
                 // De sleutel dwingt een verse invulling af bij het wisselen van
                 // kaart. Zonder dat blijven meldingen over een foto van de vorige
                 // kaart staan bij de volgende.
                 <CardForm key={selected.id} card={selected} onChange={patchCard} />
               ) : (
-                <p className="panel-empty">
-                  Kies links een moment, of voeg er een toe.
-                </p>
-              )
-            ) : (
+                <p className="panel-empty">Kies links een moment, of voeg er een toe.</p>
+              ))}
+
+            {tab === 'kaart' && (
+              <CardStylePanel card={selected} theme={doc.theme} onChange={patchCard} />
+            )}
+
+            {tab === 'tijdlijn' && (
               <SettingsPanel
                 settings={doc.settings}
                 theme={doc.theme}

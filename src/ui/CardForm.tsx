@@ -1,6 +1,12 @@
-import type { Card, CardType, TextPlacement } from '../model/types'
+import type { Card, CardType, CompareLayout, TextPlacement } from '../model/types'
 import { buildDate, precisionLabel } from '../model/dates'
-import { cardTypeLabel, typeUsesBody, typeUsesMedia } from '../model/doc'
+import {
+  cardTypeLabel,
+  typeUsesBody,
+  typeUsesMedia,
+  typeUsesTweedeMedia,
+  typeUsesTweedeTekst,
+} from '../model/doc'
 import { ImageField } from './ImageField'
 import { Field, NumberInput, Segmented, Select, TextArea, TextInput, Toggle } from './controls'
 import { KADER_KLEUREN } from '../model/palette'
@@ -11,7 +17,26 @@ interface Props {
   onChange: (patch: Partial<Card>, label?: string) => void
 }
 
-const TYPES: CardType[] = ['title', 'image-text', 'image', 'text', 'quote', 'graphic']
+const TYPES: CardType[] = ['title', 'image-text', 'image', 'text', 'quote', 'graphic', 'compare']
+
+/** Suggesties voor het label op de titelkaart; vrij te overschrijven. */
+const BADGES = [
+  'Dossier',
+  'Verhaal',
+  'Tijdlijn',
+  'Collectie',
+  'Verdieping',
+  'Reconstructie',
+  'Evenement',
+  'Herdenking',
+  'Geschiedenis',
+]
+
+const INDELINGEN: { value: CompareLayout; label: string; title: string }[] = [
+  { value: 'twee-beeld-een-tekst', label: '2 beeld, 1 tekst', title: 'Twee beelden naast elkaar, één tekst eronder' },
+  { value: 'twee-beeld-twee-tekst', label: '2 beeld, 2 tekst', title: 'Twee beelden, elk met een eigen tekst' },
+  { value: 'een-beeld-twee-tekst', label: '1 beeld, 2 tekst', title: 'Eén beeld met twee tekstblokken ernaast' },
+]
 
 const PLAATSING: { value: TextPlacement; label: string; title: string }[] = [
   { value: 'over', label: 'Over', title: 'Tekst over het beeld' },
@@ -122,6 +147,38 @@ export function CardForm({ card, onChange }: Props) {
         </Field>
       )}
 
+      {isTitel && (
+        <Field
+          label="Label bovenaan"
+          hint="Het blokje boven de titel. Kies een suggestie of typ je eigen woord."
+        >
+          <div className="badgerij">
+            <TextInput
+              value={card.badge}
+              placeholder="Dossier"
+              list="badge-suggesties"
+              onChange={(v) => onChange({ badge: v }, 'badge')}
+            />
+            <datalist id="badge-suggesties">
+              {BADGES.map((b) => (
+                <option key={b} value={b} />
+              ))}
+            </datalist>
+          </div>
+        </Field>
+      )}
+
+      {card.type === 'compare' && (
+        <Field group label="Indeling" hint="Wat naast elkaar komt te staan.">
+          <Segmented
+            label="Indeling van de vergelijkkaart"
+            value={card.compareLayout}
+            onChange={(v) => onChange({ compareLayout: v })}
+            options={INDELINGEN}
+          />
+        </Field>
+      )}
+
       {typeUsesBody(card.type) && !isTitel && (
         <Field
           group
@@ -195,13 +252,76 @@ export function CardForm({ card, onChange }: Props) {
         </Field>
       )}
 
+      {typeUsesTweedeTekst(card) && (
+        <Field
+          group
+          label="Tweede tekst"
+          hint="De tekst bij het rechterdeel van de vergelijking."
+        >
+          <RichText
+            value={card.body2}
+            rows={4}
+            ariaLabel="Tweede tekst"
+            placeholder="De andere kant van de vergelijking."
+            onChange={(v) => onChange({ body2: v }, 'tekst2')}
+          />
+        </Field>
+      )}
+
+      {card.type === 'graphic' && (
+        <Field
+          group
+          label="Formaat van de graphic"
+          hint="In een kader staat de grafiek op een gekleurd vlak met lucht eromheen; beeldvullend loopt hij door tot de randen van de kaart."
+        >
+          <Segmented
+            label="Formaat van de graphic"
+            value={card.graphicFit}
+            onChange={(v) => onChange({ graphicFit: v })}
+            options={[
+              { value: 'kader', label: 'In kader' },
+              { value: 'vullend', label: 'Beeldvullend' },
+            ]}
+          />
+          {card.graphicFit === 'kader' && (
+            <div className="stalen">
+              {KADER_KLEUREN.map((k) => (
+                <button
+                  key={k.hex}
+                  type="button"
+                  className={`staal ${
+                    k.hex.toLowerCase() === card.graphicFrameColor.toLowerCase() ? 'is-on' : ''
+                  }`}
+                  style={{ background: k.hex }}
+                  onClick={() => onChange({ graphicFrameColor: k.hex })}
+                  title={`${k.naam} · ${k.hex}`}
+                  aria-label={k.naam}
+                  aria-pressed={k.hex.toLowerCase() === card.graphicFrameColor.toLowerCase()}
+                />
+              ))}
+            </div>
+          )}
+        </Field>
+      )}
+
       {typeUsesMedia(card.type) && (
         <div className="form-block">
-          <h3 className="form-h3">Beeld</h3>
+          <h3 className="form-h3">{typeUsesTweedeMedia(card) ? 'Eerste beeld' : 'Beeld'}</h3>
           <ImageField
             media={card.media}
             cropped={card.type !== 'graphic'}
             onChange={(media, label) => onChange({ media }, label)}
+          />
+        </div>
+      )}
+
+      {typeUsesTweedeMedia(card) && (
+        <div className="form-block">
+          <h3 className="form-h3">Tweede beeld</h3>
+          <ImageField
+            media={card.media2}
+            cropped
+            onChange={(media2, label) => onChange({ media2 }, label ? `2:${label}` : undefined)}
           />
         </div>
       )}

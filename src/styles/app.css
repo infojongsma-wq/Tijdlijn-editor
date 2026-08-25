@@ -1272,3 +1272,63 @@
   border-color: var(--oost-geel);
   background: rgba(255, 247, 231, 0.95);
 }
+
+
+/* ---------- label-suggesties op de titelkaart ---------- */
+
+.badgerij {
+  display: flex;
+  gap: 6px;
+}
+
+/* ---------- compacte kleurstalen per tekstballon ---------- */
+
+.anitem-kleuren {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px 0 2px;
+  border-top: 1px solid var(--ui-line-soft);
+}
+.ministalen {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.ministalen-label {
+  font-size: 11px;
+  color: var(--ui-ink-soft);
+  width: 44px;
+  flex-shrink: 0;
+}
+.ministaal {
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  border: 1px solid var(--ui-line);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+.ministaal.is-on {
+  box-shadow: 0 0 0 1px var(--ui-panel), 0 0 0 2.5px var(--oost-blauw);
+}
+/* 'Volg het thema' krijgt een schuine streep, zodat het niet op een gewone
+   kleur lijkt. */
+.ministaal.is-thema,
+.staal.is-thema {
+  position: relative;
+  background:
+    linear-gradient(
+      135deg,
+      transparent calc(50% - 1px),
+      var(--ui-ink-faint) calc(50% - 1px),
+      var(--ui-ink-faint) calc(50% + 1px),
+      transparent calc(50% + 1px)
+    ),
+    var(--ui-sunken);
+}
+.staal.is-thema {
+  background-blend-mode: normal;
+}

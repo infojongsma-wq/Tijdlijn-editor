@@ -1,6 +1,6 @@
 import { DEFAULT_ADJUST, type Annotation, type Card, type TimelineDoc } from './types'
 import { buildDate } from './dates'
-import { emptyDoc, newId } from './doc'
+import { emptyCard, emptyDoc, newId } from './doc'
 
 import begrip from '../assets/demo/wolf-begrip.jpg'
 import enter from '../assets/demo/wolf-enter.jpg'
@@ -83,8 +83,8 @@ const BRONNEN: Bron[] = [
     textPlacement: 'below',
     source: 'RTV Oost',
     annotations: [
-      { id: 'demo-wolf', x: 0.34, y: 0.5, bx: 0.5, by: 0.24, text: 'De wolf, gefilmd door een omwonende', reveal: 'always', line: true, icon: null },
-      { id: 'demo-n347', x: 0.68, y: 0.52, bx: 0.52, by: 0.78, text: 'De N347, waar het dier zou zijn doodgereden', reveal: 'hover', line: true, icon: null },
+      { id: 'demo-wolf', x: 0.34, y: 0.5, bx: 0.5, by: 0.24, text: 'De wolf, gefilmd door een omwonende', reveal: 'always', line: true, icon: null, dotColor: null, textColor: null, balloonColor: null },
+      { id: 'demo-n347', x: 0.68, y: 0.52, bx: 0.52, by: 0.78, text: 'De N347, waar het dier zou zijn doodgereden', reveal: 'hover', line: true, icon: null, dotColor: null, textColor: null, balloonColor: null },
     ],
   },
   {
@@ -178,6 +178,7 @@ export function demoDoc(): TimelineDoc {
 function toCard(bron: Bron): Card {
   const [jaar, maand, dag, uur, minuut] = bron.date
   return {
+    ...emptyCard(bron.type),
     id: newId(),
     type: bron.type,
     date: buildDate(jaar, maand, dag, uur, minuut),

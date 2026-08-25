@@ -34,11 +34,30 @@ export type CardType =
   | 'text'
   /** Uitgelicht citaat, met naam en functie. */
   | 'quote'
-  /** Grafiek of kaart: wordt volledig getoond, nooit bijgesneden. */
+  /** Grafiek of kaart: standaard volledig getoond, nooit bijgesneden. */
   | 'graphic'
+  /** Twee beelden naast elkaar, of één beeld met twee tekstblokken —
+   *  om iets te vergelijken: voor en na, hier en daar, toen en nu. */
+  | 'compare'
 
 /** Waar de tekst staat ten opzichte van het beeld. Alleen voor 'image-text'. */
 export type TextPlacement = 'over' | 'below' | 'beside'
+
+/** De verdeling op een vergelijkkaart. */
+export type CompareLayout =
+  /** Twee beelden, één gezamenlijk tekstblok eronder. */
+  | 'twee-beeld-een-tekst'
+  /** Twee beelden, elk met een eigen tekstblok. */
+  | 'twee-beeld-twee-tekst'
+  /** Eén beeld, twee tekstblokken ernaast. */
+  | 'een-beeld-twee-tekst'
+
+/** Hoe een grafiek de kaart vult. */
+export type GraphicFit =
+  /** In een gekleurd kader, met ruimte eromheen. */
+  | 'kader'
+  /** Over de volle kaart, tot aan de randen. */
+  | 'vullend'
 
 export interface MediaAdjust {
   /** Brandpunt als fractie (0-1) van de afbeelding. Bepaalt wat er in beeld blijft
@@ -93,6 +112,10 @@ export interface Annotation {
   line: boolean
   /** Eigen picto (data-URL) in plaats van de standaardstip. */
   icon: string | null
+  /** Eigen kleuren; null betekent: volg het thema van de tijdlijn. */
+  dotColor: string | null
+  textColor: string | null
+  balloonColor: string | null
 }
 
 export interface Media {
@@ -131,6 +154,24 @@ export interface Card {
   textPlacement: TextPlacement
   /** Herkomst van dit moment. Journalistiek onmisbaar, ook als het niet getoond wordt. */
   source: string
+
+  /** Het label op de titelkaart. Standaard 'Dossier', maar vrij in te vullen. */
+  badge: string
+
+  /** Vormgeving van déze kaart. null = volg het thema van de tijdlijn; een
+   *  eigen kleur is voor de kaart waar de foto erom vraagt. */
+  headingColor: string | null
+  bodyColor: string | null
+
+  /** Alleen bij type 'compare'. */
+  compareLayout: CompareLayout
+  /** Het tweede beeld en de tweede tekst van een vergelijkkaart. */
+  media2: Media | null
+  body2: string
+
+  /** Alleen bij type 'graphic'. */
+  graphicFit: GraphicFit
+  graphicFrameColor: string
 }
 
 export type TimelineForm =

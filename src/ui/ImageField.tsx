@@ -9,6 +9,7 @@ import {
   type ImageWarning,
 } from '../model/image'
 import { newId } from '../model/doc'
+import { ALLE_KLEUREN } from '../model/palette'
 import { Button, Field, Slider, TextArea, TextInput, Toggle } from './controls'
 
 interface Props {
@@ -173,13 +174,6 @@ export function ImageField({ media, onChange, cropped }: Props) {
       ))}
       {fout && <p className="msg msg-error">{fout}</p>}
 
-      <Aanwijzers
-        annotations={media.annotations}
-        actief={actieveAanwijzer}
-        onActief={setActieveAanwijzer}
-        onWijzig={zetAanwijzers}
-      />
-
       <div className="imgfield-sliders">
         {cropped && (
           <Slider
@@ -266,6 +260,13 @@ export function ImageField({ media, onChange, cropped }: Props) {
           mensen met een schermlezer.
         </p>
       )}
+
+      <Aanwijzers
+        annotations={media.annotations}
+        actief={actieveAanwijzer}
+        onActief={setActieveAanwijzer}
+        onWijzig={zetAanwijzers}
+      />
     </div>
   )
 }
@@ -326,6 +327,9 @@ function Aanwijzers({
       reveal: 'always',
       line: true,
       icon: null,
+      dotColor: null,
+      textColor: null,
+      balloonColor: null,
     }
     onActief(nieuw.id)
     onWijzig([...annotations, nieuw], 'aanwijzer-toevoegen')
@@ -403,6 +407,41 @@ function Aanwijzers({
                     }
                   />
                 )}
+                <div className="anitem-kleuren">
+                  {a.line && (
+                    <MiniStalen
+                      label="Stip"
+                      waarde={a.dotColor}
+                      onKies={(hex) =>
+                        onWijzig(
+                          annotations.map((x) => (x.id === a.id ? { ...x, dotColor: hex } : x)),
+                          `aanwijzer-stip:${a.id}`,
+                        )
+                      }
+                    />
+                  )}
+                  <MiniStalen
+                    label="Ballon"
+                    waarde={a.balloonColor}
+                    onKies={(hex) =>
+                      onWijzig(
+                        annotations.map((x) => (x.id === a.id ? { ...x, balloonColor: hex } : x)),
+                        `aanwijzer-ballon:${a.id}`,
+                      )
+                    }
+                  />
+                  <MiniStalen
+                    label="Tekst"
+                    waarde={a.textColor}
+                    onKies={(hex) =>
+                      onWijzig(
+                        annotations.map((x) => (x.id === a.id ? { ...x, textColor: hex } : x)),
+                        `aanwijzer-tekst:${a.id}`,
+                      )
+                    }
+                  />
+                </div>
+
                 {a.line && (
                   <div className="anitem-picto">
                     {a.icon && <img src={a.icon} alt="" className="anitem-picto-thumb" />}
@@ -690,6 +729,49 @@ function FocalPicker({
         >
           {i + 1}
         </span>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Een compacte rij kleurstalen met 'volg het thema' als eerste keuze.
+ *
+ * Klein gehouden omdat er drie van deze rijen per tekstballon staan: de stip,
+ * de ballon en de tekst erin. Standaard volgt alles het thema van de tijdlijn;
+ * een eigen kleur is voor de ballon die anders wegvalt tegen de foto.
+ */
+function MiniStalen({
+  label,
+  waarde,
+  onKies,
+}: {
+  label: string
+  waarde: string | null
+  onKies: (hex: string | null) => void
+}) {
+  return (
+    <div className="ministalen" role="group" aria-label={`${label}kleur`}>
+      <span className="ministalen-label">{label}</span>
+      <button
+        type="button"
+        className={`ministaal is-thema ${waarde === null ? 'is-on' : ''}`}
+        onClick={() => onKies(null)}
+        title="Volg het thema van de tijdlijn"
+        aria-label="Volg het thema"
+        aria-pressed={waarde === null}
+      />
+      {ALLE_KLEUREN.map((k) => (
+        <button
+          key={k.hex}
+          type="button"
+          className={`ministaal ${waarde?.toLowerCase() === k.hex.toLowerCase() ? 'is-on' : ''}`}
+          style={{ background: k.hex }}
+          onClick={() => onKies(k.hex)}
+          title={k.naam}
+          aria-label={k.naam}
+          aria-pressed={waarde?.toLowerCase() === k.hex.toLowerCase()}
+        />
       ))}
     </div>
   )

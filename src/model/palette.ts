@@ -31,6 +31,16 @@ export const SECUNDAIR: Swatch[] = [
   { naam: 'Oost Groen', hex: '#ABBF3D' },
 ]
 
+/** De 10%-tinten uit de huisstijl — de nuances. */
+export const TINTEN: Swatch[] = [
+  { naam: 'Zacht blauw', hex: '#E7EEF9' },
+  { naam: 'Zacht paars', hex: '#F3E6FF' },
+  { naam: 'Zacht rood', hex: '#FFECEC' },
+  { naam: 'Zacht oranje', hex: '#FFF0E7' },
+  { naam: 'Zacht geel', hex: '#FFF7E7' },
+  { naam: 'Zacht groen', hex: '#F5F7EC' },
+]
+
 /**
  * Achtergronden. Naast de merkkleuren twee nuances: een diepere variant van het
  * donkerblauw voor als beeld over de volle breedte moet ademen, en het crème uit
@@ -43,16 +53,6 @@ export const ACHTERGRONDEN: Swatch[] = [
   { naam: 'Wit', hex: OOST_WIT },
   { naam: 'Lichtblauw', hex: OOST_LICHTBLAUW },
   { naam: 'Crème', hex: OOST_CREME },
-  { naam: 'Zacht paars', hex: '#F3E6FF' },
-  { naam: 'Zacht rood', hex: '#FFECEC' },
-  { naam: 'Zacht oranje', hex: '#FFF0E7' },
-  { naam: 'Zacht geel', hex: '#FFF7E7' },
-  { naam: 'Zacht groen', hex: '#F5F7EC' },
-]
-
-/** De 10%-tinten uit de huisstijl — de nuances. */
-export const TINTEN: Swatch[] = [
-  { naam: 'Zacht blauw', hex: '#E7EEF9' },
   { naam: 'Zacht paars', hex: '#F3E6FF' },
   { naam: 'Zacht rood', hex: '#FFECEC' },
   { naam: 'Zacht oranje', hex: '#FFF0E7' },
@@ -93,6 +93,27 @@ export const KADER_KLEUREN: Swatch[] = [
   { naam: 'Crème', hex: OOST_CREME },
   ...SECUNDAIR,
   ...TINTEN,
+]
+
+/** De vier kleuren waarin een kop mag staan. Bewust kort: een kop hoort
+ *  herkenbaar te blijven, niet elke kaart een eigen kleur. */
+export const KOP_KLEUREN: Swatch[] = [
+  { naam: 'Oost Blauw', hex: OOST_BLAUW },
+  { naam: 'Oost Donkerblauw', hex: OOST_DONKERBLAUW },
+  { naam: 'Oost Wit', hex: OOST_WIT },
+  { naam: 'Oost Lichtblauw', hex: OOST_LICHTBLAUW },
+]
+
+/** Alles wat het palet te bieden heeft, voor losse onderdelen als een
+ *  tekstballon of een kaderkleur. */
+export const ALLE_KLEUREN: Swatch[] = [
+  { naam: 'Oost Donkerblauw', hex: OOST_DONKERBLAUW },
+  { naam: 'Diep donkerblauw', hex: '#0B0E14' },
+  { naam: 'Oost Wit', hex: OOST_WIT },
+  { naam: 'Oost Lichtblauw', hex: OOST_LICHTBLAUW },
+  { naam: 'Crème', hex: OOST_CREME },
+  ...SECUNDAIR,
+  ...TINTEN.filter((t) => t.hex !== OOST_LICHTBLAUW),
 ]
 
 export const TEKSTKLEUREN: Swatch[] = [

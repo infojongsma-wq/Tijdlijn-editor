@@ -40,6 +40,14 @@ export function emptyCard(type: CardType = 'image-text'): Card {
     quoteFrameColor: '#F5F0E8',
     textPlacement: 'over',
     source: '',
+    badge: 'Dossier',
+    headingColor: null,
+    bodyColor: null,
+    compareLayout: 'twee-beeld-een-tekst',
+    media2: null,
+    body2: '',
+    graphicFit: 'kader',
+    graphicFrameColor: '#FFFFFF',
   }
 }
 
@@ -89,6 +97,8 @@ export function cardTypeLabel(type: CardType): string {
     case 'text': return 'Alleen tekst'
     case 'quote': return 'Citaat'
     case 'graphic': return 'Graphic'
+    case 'compare': return 'Vergelijken'
+    default: return 'Kaart'
   }
 }
 
@@ -97,6 +107,17 @@ export function cardTypeLabel(type: CardType): string {
  *  staat er een foto op de kaart die je nergens kunt bewerken. */
 export function typeUsesMedia(type: CardType): boolean {
   return type !== 'text'
+}
+
+/** Heeft dit type een tweede beeld? Alleen de vergelijkkaart, en dan alleen
+ *  in de indelingen die er twee tonen. */
+export function typeUsesTweedeMedia(card: Card): boolean {
+  return card.type === 'compare' && card.compareLayout !== 'een-beeld-twee-tekst'
+}
+
+/** Heeft dit type een tweede tekstblok? */
+export function typeUsesTweedeTekst(card: Card): boolean {
+  return card.type === 'compare' && card.compareLayout !== 'twee-beeld-een-tekst'
 }
 
 export function typeUsesBody(type: CardType): boolean {
@@ -129,19 +150,8 @@ function normaliseCard(raw: unknown): Card {
   if (!raw || typeof raw !== 'object') return basis
 
   const input = raw as Partial<Card>
-  const media = input.media
-    ? {
-        src: veiligeSrc(String(input.media.src ?? '')),
-        mime: String(input.media.mime ?? 'image/jpeg'),
-        width: Number(input.media.width) || 0,
-        height: Number(input.media.height) || 0,
-        alt: String(input.media.alt ?? ''),
-        caption: String(input.media.caption ?? ''),
-        credit: String(input.media.credit ?? ''),
-        adjust: { ...DEFAULT_ADJUST, ...(input.media.adjust ?? {}) },
-        annotations: normaliseAnnotations(input.media.annotations),
-      }
-    : null
+  const media = normaliseMedia(input.media)
+  const media2 = normaliseMedia(input.media2)
 
   return {
     ...basis,
@@ -156,8 +166,43 @@ function normaliseCard(raw: unknown): Card {
     // Oudere bestanden bewaarden de tekst zonder opmaak; die wordt hier omgezet
     // zodat er niets verloren gaat en er niets ongefilterds binnenkomt.
     body: leesTekst(input.body),
+    body2: leesTekst(input.body2),
+    badge: typeof input.badge === 'string' && input.badge.trim() ? input.badge : basis.badge,
+    headingColor: veiligeKleurOfNull(input.headingColor),
+    bodyColor: veiligeKleurOfNull(input.bodyColor),
+    compareLayout:
+      input.compareLayout === 'twee-beeld-twee-tekst' ||
+      input.compareLayout === 'een-beeld-twee-tekst'
+        ? input.compareLayout
+        : basis.compareLayout,
+    graphicFit: input.graphicFit === 'vullend' ? 'vullend' : 'kader',
+    graphicFrameColor: veiligeKleurOfNull(input.graphicFrameColor) ?? basis.graphicFrameColor,
     media,
+    media2,
   }
+}
+
+function normaliseMedia(raw: unknown): Card['media'] {
+  if (!raw || typeof raw !== 'object') return null
+  const m = raw as NonNullable<Card['media']>
+  return {
+    src: veiligeSrc(String(m.src ?? '')),
+    mime: String(m.mime ?? 'image/jpeg'),
+    width: Number(m.width) || 0,
+    height: Number(m.height) || 0,
+    alt: String(m.alt ?? ''),
+    caption: String(m.caption ?? ''),
+    credit: String(m.credit ?? ''),
+    adjust: { ...DEFAULT_ADJUST, ...(m.adjust ?? {}) },
+    annotations: normaliseAnnotations(m.annotations),
+  }
+}
+
+/** Een losse kleur uit een bestand: alleen echte hex, anders 'volg het thema'. */
+function veiligeKleurOfNull(waarde: unknown): string | null {
+  return typeof waarde === 'string' && /^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(waarde.trim())
+    ? waarde.trim()
+    : null
 }
 
 function leesTekst(waarde: unknown): string {
@@ -186,6 +231,9 @@ function normaliseAnnotations(raw: unknown): Annotation[] {
         text: typeof a.text === 'string' ? a.text : '',
         reveal: a.reveal === 'hover' ? 'hover' : 'always',
         line: a.line !== false,
+        dotColor: veiligeKleurOfNull(a.dotColor),
+        textColor: veiligeKleurOfNull(a.textColor),
+        balloonColor: veiligeKleurOfNull(a.balloonColor),
         // Alleen ingebedde afbeeldingen; een pad of webadres uit een bewerkt
         // bestand hoort hier niet doorheen te komen.
         icon: typeof a.icon === 'string' && a.icon.startsWith('data:image/') ? a.icon : null,

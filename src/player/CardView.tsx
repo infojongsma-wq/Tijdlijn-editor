@@ -33,6 +33,8 @@ export function CardView({ card, theme, showTime }: Props) {
       return <QuoteCard card={card} theme={theme} datum={datum} />
     case 'graphic':
       return <GraphicCard card={card} theme={theme} datum={datum} />
+    case 'compare':
+      return <CompareCard card={card} theme={theme} datum={datum} />
     case 'image-text':
     default:
       return <ImageTextCard card={card} theme={theme} datum={datum} />
@@ -83,9 +85,9 @@ function TitleCard({ card, theme }: { card: Card; theme: Theme }) {
           className="pc-badge"
           style={{ background: theme.accent, color: afgeleid(theme).onAccent }}
         >
-          Dossier
+          {card.badge || 'Dossier'}
         </span>
-        <h1 className="pc-h1">{card.title || 'Naamloos dossier'}</h1>
+        <Kop card={card} niveau={1} />
         {card.subtitle && <p className="pc-standfirst">{card.subtitle}</p>}
         <p className="pc-hint" aria-hidden="true">
           Scrol om te beginnen
@@ -121,8 +123,8 @@ function ImageTextCard({
       />
       <Inner>
         <Meta datum={datum} theme={theme} />
-        <h2 className="pc-h2">{card.title}</h2>
-        <Body html={card.body} />
+        <Kop card={card} />
+        <Body html={card.body} kleur={card.bodyColor} />
         <Credit card={card} />
       </Inner>
     </article>
@@ -148,8 +150,8 @@ function TextCard({ card, theme, datum }: { card: Card; theme: Theme; datum: str
     <article className="pc pc-text">
       <Inner className="pc-middle">
         <Meta datum={datum} theme={theme} />
-        <h2 className="pc-h2">{card.title}</h2>
-        <Body html={card.body} lead />
+        <Kop card={card} />
+        <Body html={card.body} lead kleur={card.bodyColor} />
       </Inner>
     </article>
   )
@@ -192,14 +194,35 @@ function QuoteCard({ card, theme, datum }: { card: Card; theme: Theme; datum: st
 }
 
 function GraphicCard({ card, theme, datum }: { card: Card; theme: Theme; datum: string }) {
+  // Beeldvullend zet de grafiek over de hele kaart, met de tekst eroverheen —
+  // goed voor een infographic die zelf al een achtergrond heeft. In een kader
+  // krijgt hij een gekleurd vlak eromheen, met lucht.
+  const vullend = card.graphicFit === 'vullend'
+
+  if (vullend && card.media) {
+    return (
+      <article className="pc pc-graphic is-vullend">
+        <Beeld media={card.media} theme={theme} veil="soft" fit="contain" />
+        <Inner>
+          <Meta datum={datum} theme={theme} />
+          <Kop card={card} niveau={3} />
+          <Credit card={card} />
+        </Inner>
+      </article>
+    )
+  }
+
   return (
     <article className="pc pc-graphic">
       <div className="pc-inner">
         <Meta datum={datum} theme={theme} />
-        <h2 className="pc-h3">{card.title}</h2>
+        <Kop card={card} niveau={3} />
         {card.media ? (
-          <div className="pc-graphicframe">
-            {/* 'contain': een grafiek mag nooit bijgesneden worden. */}
+          <div
+            className="pc-graphicframe has-kader"
+            style={{ background: card.graphicFrameColor }}
+          >
+            {/* 'contain': een grafiek in een kader mag nooit bijgesneden worden. */}
             <div className="pc-mediabox">
               <img
                 src={card.media.src}
@@ -219,6 +242,71 @@ function GraphicCard({ card, theme, datum }: { card: Card; theme: Theme; datum: 
 }
 
 /**
+ * De vergelijkkaart: voor en na, hier en daar, toen en nu.
+ *
+ * Drie indelingen uit dezelfde bouwstenen — twee beelden met één tekst, twee
+ * beelden met elk een tekst, of één beeld met twee teksten ernaast. Op een
+ * smal scherm komen de kolommen onder elkaar te staan; naast elkaar vergelijken
+ * lukt op een telefoon toch niet.
+ */
+function CompareCard({ card, theme, datum }: { card: Card; theme: Theme; datum: string }) {
+  const indeling = card.compareLayout
+  const tweeBeelden = indeling !== 'een-beeld-twee-tekst'
+  const tweeTeksten = indeling !== 'twee-beeld-een-tekst'
+
+  return (
+    <article className={`pc pc-compare is-${indeling}`}>
+      <Inner>
+        <Meta datum={datum} theme={theme} />
+        <Kop card={card} niveau={3} />
+
+        <div className="pc-comparegrid">
+          <div className="pc-comparekolom">
+            <MediaVak media={card.media} theme={theme} />
+            {tweeTeksten && <Body html={card.body} kleur={card.bodyColor} />}
+          </div>
+
+          <div className="pc-comparekolom">
+            {tweeBeelden ? (
+              <MediaVak media={card.media2} theme={theme} />
+            ) : (
+              <Body html={card.body} kleur={card.bodyColor} />
+            )}
+            {tweeTeksten && <Body html={card.body2} kleur={card.bodyColor} />}
+          </div>
+        </div>
+
+        {!tweeTeksten && <Body html={card.body} kleur={card.bodyColor} />}
+        <Bijschriften card={card} />
+      </Inner>
+    </article>
+  )
+}
+
+function MediaVak({ media, theme }: { media: Media | null; theme: Theme }) {
+  if (!media) return <Empty theme={theme} />
+  return (
+    <div className="pc-comparebeeld">
+      <div className="pc-mediabox">
+        <img src={media.src} alt={media.alt} style={mediaStyle(media, 'cover')} />
+        <Aanwijzers media={media} theme={theme} fit="cover" />
+      </div>
+    </div>
+  )
+}
+
+/** Beide rechtenregels van een vergelijkkaart, ontdubbeld. */
+function Bijschriften({ card }: { card: Card }) {
+  const regels = [card.media, card.media2]
+    .filter((m): m is Media => m !== null)
+    .map(creditLine)
+    .filter(Boolean)
+  const uniek = [...new Set(regels)]
+  if (uniek.length === 0) return null
+  return <p className="pc-credit">{uniek.join(' · ')}</p>
+}
+
+/**
  * De foto met zijn sluier en zijn tekstballonnen.
  *
  * De sluier wordt getint met de achtergrondkleur van het thema in plaats van
@@ -230,19 +318,21 @@ function Beeld({
   theme,
   veil,
   ingekaderd,
+  fit = 'cover',
 }: {
   media: Media
   theme: Theme
   veil: 'none' | 'soft' | 'strong'
   ingekaderd?: boolean
+  fit?: 'cover' | 'contain'
 }) {
   return (
     <div className={ingekaderd ? 'pc-framed' : 'pc-bleed'}>
-      <img src={media.src} alt={media.alt} style={mediaStyle(media, 'cover')} />
+      <img src={media.src} alt={media.alt} style={mediaStyle(media, fit)} />
       {veil !== 'none' && (
         <div className={`pc-veil ${veil === 'strong' ? 'pc-veil-strong' : ''}`} />
       )}
-      <Aanwijzers media={media} theme={theme} fit="cover" />
+      <Aanwijzers media={media} theme={theme} fit={fit} />
     </div>
   )
 }
@@ -374,9 +464,9 @@ function Aanwijzers({
                   style={{
                     left: `${bal.x * 100}%`,
                     top: `${bal.y * 100}%`,
-                    background: theme.background,
-                    color: theme.text,
-                    borderColor: extra.axisLine,
+                    background: a.balloonColor ?? theme.background,
+                    color: a.textColor ?? (a.balloonColor ? tekstVoor(a.balloonColor) : theme.text),
+                    borderColor: a.balloonColor ? 'transparent' : extra.axisLine,
                   }}
                 >
                   {a.text}
@@ -399,12 +489,12 @@ function Aanwijzers({
                     style={{
                       left: `${anker.x * 100}%`,
                       top: `${anker.y * 100}%`,
-                      borderColor: theme.accent,
+                      borderColor: a.dotColor ?? theme.accent,
                     }}
                     tabIndex={verborgen ? 0 : -1}
                     aria-label={verborgen ? a.text || `Aanwijzer ${i + 1}` : undefined}
                   >
-                    <span className="an-kern" style={{ background: theme.accent }} />
+                    <span className="an-kern" style={{ background: a.dotColor ?? theme.accent }} />
                   </span>
                 ))}
             </div>
@@ -414,14 +504,29 @@ function Aanwijzers({
   )
 }
 
-function Body({ html, lead }: { html: string; lead?: boolean }) {
+function Body({ html, lead, kleur }: { html: string; lead?: boolean; kleur?: string | null }) {
   if (!html) return null
   return (
     <p
       className={`pc-body ${lead ? 'pc-body-lead' : ''}`}
+      style={kleur ? { color: kleur } : undefined}
       dangerouslySetInnerHTML={{ __html: sanitizeRich(html) }}
     />
   )
+}
+
+/** De kop van een kaart, in de kleur van de kaart of anders die van het thema. */
+function Kop({
+  card,
+  niveau = 2,
+}: {
+  card: Card
+  niveau?: 1 | 2 | 3
+}) {
+  const stijl = card.headingColor ? { color: card.headingColor } : undefined
+  if (niveau === 1) return <h1 className="pc-h1" style={stijl}>{card.title || 'Naamloos dossier'}</h1>
+  if (niveau === 3) return <h2 className="pc-h3" style={stijl}>{card.title}</h2>
+  return <h2 className="pc-h2" style={stijl}>{card.title}</h2>
 }
 
 function Meta({ datum, theme }: { datum: string; theme: Theme }) {

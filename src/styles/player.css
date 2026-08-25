@@ -602,6 +602,38 @@
   .vp-axis-right .pc-inner {
     padding-right: 52px;
   }
+
+  /* Alle datums naast elkaar passen hier niet, maar zónder datum weet de lezer
+     niet waar in de tijd hij is. Daarom blijft de datum van het moment dat in
+     beeld staat wél staan, als los chipje naast zijn stip. */
+  .ax-left .ax-label,
+  .ax-right .ax-label {
+    display: none;
+  }
+  .ax-left .ax-stop.is-active .ax-label,
+  .ax-right .ax-stop.is-active .ax-label,
+  .ax-stop button:focus-visible .ax-label {
+    display: block;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 3px 9px;
+    border-radius: var(--radius-pill);
+    background: var(--ax-chip, rgba(0, 0, 0, 0.6));
+    font-size: 11.5px;
+    font-weight: 600;
+    text-shadow: none;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .ax-left .ax-stop.is-active .ax-label,
+  .ax-left .ax-stop button:focus-visible .ax-label {
+    left: 22px;
+  }
+  .ax-right .ax-stop.is-active .ax-label,
+  .ax-right .ax-stop button:focus-visible .ax-label {
+    right: 22px;
+  }
   .vp-axis-top .pc-inner {
     padding-top: 74px;
   }
@@ -834,4 +866,66 @@
    heeft — anders tab je langs stops zonder te weten waar je bent. */
 .ax-stop button:focus-visible .ax-label.is-hidden {
   opacity: 1;
+}
+
+
+/* ---------- vergelijkkaart ---------- */
+
+.pc-compare .pc-inner {
+  max-width: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.pc-comparegrid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(12px, 2.4cqi, 28px);
+  margin: 4px 0 12px;
+}
+.pc-comparekolom {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+.pc-comparebeeld {
+  flex: 1;
+  min-height: 0;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.pc-comparebeeld .pc-mediabox {
+  width: 100%;
+  height: 100%;
+}
+.pc-comparebeeld .pc-mediabox > img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Naast elkaar vergelijken lukt op een telefoon niet; dan onder elkaar. */
+@container (max-width: 560px) {
+  .pc-comparegrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- graphic: kader of beeldvullend ---------- */
+
+.pc-graphicframe.has-kader {
+  border-radius: var(--radius-card);
+  padding: clamp(10px, 1.8cqi, 22px);
+}
+.pc-graphic.is-vullend {
+  justify-content: flex-end;
+}
+.pc-graphic.is-vullend .pc-inner {
+  max-width: 72ch;
+  width: auto;
+  display: block;
 }
