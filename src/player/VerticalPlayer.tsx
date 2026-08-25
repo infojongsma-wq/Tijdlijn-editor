@@ -47,13 +47,17 @@ export function VerticalPlayer({
   const [hoogte, setHoogte] = useState(0)
   const [progress, setProgress] = useState(0)
   const [duwen, setDuwen] = useState(settings.pushTransition)
+  const rustigAan = useRef(false)
 
   const aantal = cards.length
 
   // Beweging uit? Dan geen duw-overgang, hoe de instelling ook staat.
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const bijwerken = () => setDuwen(settings.pushTransition && !media.matches)
+    const bijwerken = () => {
+      rustigAan.current = media.matches
+      setDuwen(settings.pushTransition && !media.matches)
+    }
     bijwerken()
     media.addEventListener('change', bijwerken)
     return () => media.removeEventListener('change', bijwerken)
@@ -101,7 +105,8 @@ export function VerticalPlayer({
       const el = scrollerRef.current
       if (!el || hoogte === 0) return
       const doel = Math.max(0, Math.min(aantal - 1, kaartIndex))
-      el.scrollTo({ top: doel * hoogte, behavior: 'smooth' })
+      // Wie zo min mogelijk beweging wil, krijgt ook geen gladde sprong.
+      el.scrollTo({ top: doel * hoogte, behavior: rustigAan.current ? 'auto' : 'smooth' })
     },
     [hoogte, aantal],
   )
@@ -188,7 +193,7 @@ export function VerticalPlayer({
         aria-label="Tijdlijn, scrol of gebruik de pijltjestoetsen"
         onKeyDown={opToets}
       >
-        <div className="vp-stage" aria-live="polite">
+        <div className="vp-stage">
           {cards.map((card, i) => {
             const afstand = i - progress
             const inBeeld = duwen ? Math.abs(afstand) < 1 : i === huidig
@@ -226,6 +231,14 @@ export function VerticalPlayer({
               aria-hidden="true"
             />
           ))}
+      </div>
+
+      {/* Eén zin per kaartwissel voor schermlezers. aria-live op het hele
+          toneel liet bij elke scroll álle kaarten voorlezen. */}
+      <div className="sr-only" aria-live="polite">
+        {cards[huidig]
+          ? `Kaart ${huidig + 1} van ${aantal}: ${cards[huidig].title || 'zonder titel'}`
+          : ''}
       </div>
 
       <Axis

@@ -69,6 +69,12 @@ export function App() {
   const patchCard = useCallback(
     (patch: Partial<Card>, label?: string) => {
       if (!selected) return
+      // Een patch die niets verandert — de blur van een tekstveld, een klik op
+      // een al gekozen optie — hoort geen geschiedenis-stap te worden: die
+      // stap is leeg én gooit de redo-stapel weg.
+      if (Object.keys(patch).every((k) => Object.is(patch[k as keyof Card], selected[k as keyof Card]))) {
+        return
+      }
       history.set(
         (huidig) => ({
           ...huidig,
@@ -104,15 +110,28 @@ export function App() {
   )
 
   const patchSettings = useCallback(
-    (patch: Partial<Settings>) =>
-      history.set((huidig) => ({ ...huidig, settings: { ...huidig.settings, ...patch } })),
-    [history],
+    (patch: Partial<Settings>) => {
+      if (Object.keys(patch).every((k) => Object.is(patch[k as keyof Settings], doc.settings[k as keyof Settings]))) {
+        return
+      }
+      history.set((huidig) => ({ ...huidig, settings: { ...huidig.settings, ...patch } }))
+    },
+    [history, doc.settings],
   )
 
   const patchTheme = useCallback(
-    (patch: Partial<Theme>) =>
-      history.set((huidig) => ({ ...huidig, theme: { ...huidig.theme, ...patch } }), 'kleur'),
-    [history],
+    (patch: Partial<Theme>) => {
+      if (Object.keys(patch).every((k) => Object.is(patch[k as keyof Theme], doc.theme[k as keyof Theme]))) {
+        return
+      }
+      // Label per veld: schuiven binnen één kleur voegt samen, maar een
+      // wijziging van accent en daarna achtergrond blijven aparte stappen.
+      history.set(
+        (huidig) => ({ ...huidig, theme: { ...huidig.theme, ...patch } }),
+        `kleur:${Object.keys(patch).sort().join(',')}`,
+      )
+    },
+    [history, doc.theme],
   )
 
   const nieuw = useCallback(() => {
@@ -152,13 +171,42 @@ export function App() {
     [history],
   )
 
+  const volledigRef = useRef<HTMLDivElement>(null)
+  const bekijkKnopRef = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     if (!bekijk) return
+    // Focus de dialoog in, houd Tab erbinnen, en geef de focus bij het sluiten
+    // terug aan de knop die hem opende — anders belandt een toetsenbord-
+    // gebruiker na Escape ergens onderin de pagina.
+    volledigRef.current?.focus()
     const opToets = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setBekijk(false)
+      if (e.key === 'Escape') {
+        setBekijk(false)
+        return
+      }
+      if (e.key !== 'Tab') return
+      const dialoog = volledigRef.current
+      if (!dialoog) return
+      const focusbaar = dialoog.querySelectorAll<HTMLElement>(
+        'button, [href], [tabindex]:not([tabindex="-1"])',
+      )
+      if (focusbaar.length === 0) return
+      const eerste = focusbaar[0]
+      const laatste = focusbaar[focusbaar.length - 1]
+      const actief = document.activeElement
+      if (e.shiftKey && (actief === eerste || actief === dialoog)) {
+        e.preventDefault()
+        laatste.focus()
+      } else if (!e.shiftKey && actief === laatste) {
+        e.preventDefault()
+        eerste.focus()
+      }
     }
     window.addEventListener('keydown', opToets)
-    return () => window.removeEventListener('keydown', opToets)
+    return () => {
+      window.removeEventListener('keydown', opToets)
+      bekijkKnopRef.current?.focus()
+    }
   }, [bekijk])
 
   // Sneltoetsen. Niet onderscheppen terwijl iemand in een tekstveld typt —
@@ -209,13 +257,15 @@ export function App() {
         </div>
 
         <div className="topbar-group topbar-right">
-          <Button
+          <button
+            type="button"
+            className="btn btn-primary"
+            ref={bekijkKnopRef}
             onClick={() => setBekijk(true)}
-            variant="primary"
             title="De hele tijdlijn schermvullend, zoals het publiek hem ziet"
           >
             ▶ Bekijken
-          </Button>
+          </button>
           <Button onClick={laadVoorbeeld} title="Vult de editor met het wolvendossier">
             Voorbeeld
           </Button>
@@ -244,7 +294,14 @@ export function App() {
       )}
 
       {bekijk && (
-        <div className="volledig" role="dialog" aria-modal="true" aria-label="Voorvertoning">
+        <div
+          className="volledig"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Voorvertoning"
+          ref={volledigRef}
+          tabIndex={-1}
+        >
           <div className="volledig-bar">
             <span className="volledig-naam">{doc.name}</span>
             <span className="volledig-hint">Zo ziet het publiek de tijdlijn — Esc om te sluiten</span>
@@ -279,11 +336,12 @@ export function App() {
         </main>
 
         <aside className="panel panel-right">
-          <div className="tabs" role="tablist">
+          {/* Bewust géén role=tablist: zonder tabpanel-koppeling en
+              pijltjesbediening belooft dat patroon meer dan het waarmaakt. */}
+          <div className="tabs" role="group" aria-label="Paneelkeuze">
             <button
               type="button"
-              role="tab"
-              aria-selected={tab === 'moment'}
+              aria-pressed={tab === 'moment'}
               className={tab === 'moment' ? 'is-on' : ''}
               onClick={() => setTab('moment')}
             >
@@ -291,8 +349,7 @@ export function App() {
             </button>
             <button
               type="button"
-              role="tab"
-              aria-selected={tab === 'instellingen'}
+              aria-pressed={tab === 'instellingen'}
               className={tab === 'instellingen' ? 'is-on' : ''}
               onClick={() => setTab('instellingen')}
             >

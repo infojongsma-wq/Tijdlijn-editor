@@ -13,12 +13,13 @@
 .topbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: var(--shell-header);
-  padding: 0 14px;
+  gap: 8px 12px;
+  min-height: var(--shell-header);
+  padding: 8px 14px;
   background: var(--ui-panel);
   border-bottom: 1px solid var(--ui-line);
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 /* Het logo is het woordmerk 'oost' in Roobert SemiBold, altijd blauw op wit. */

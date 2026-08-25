@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef, type ReactNode } from 'react'
-import type { Annotation, Card, Media, Theme } from '../model/types'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import type { Card, Media, Theme } from '../model/types'
 import { formatDate } from '../model/dates'
 import { sanitizeRich } from '../model/richtext'
 import { afgeleid, tekstVoor } from '../model/palette'
@@ -55,7 +55,7 @@ function Inner({ className = '', children }: { className?: string; children: Rea
       el.style.setProperty('--fit', '1')
       let f = 1
       while (el.scrollHeight > el.clientHeight + 1 && f > 0.68) {
-        f = Math.round((f - 0.05) * 100) / 100
+        f = Math.max(0.68, Math.round((f - 0.05) * 100) / 100)
         el.style.setProperty('--fit', String(f))
       }
     }
@@ -206,7 +206,7 @@ function GraphicCard({ card, theme, datum }: { card: Card; theme: Theme; datum: 
                 alt={card.media.alt}
                 style={mediaStyle(card.media, 'contain')}
               />
-              <Aanwijzers annotations={card.media.annotations} theme={theme} />
+              <Aanwijzers media={card.media} theme={theme} fit="contain" />
             </div>
           </div>
         ) : (
@@ -242,10 +242,51 @@ function Beeld({
       {veil !== 'none' && (
         <div className={`pc-veil ${veil === 'strong' ? 'pc-veil-strong' : ''}`} />
       )}
-      <Aanwijzers annotations={media.annotations} theme={theme} />
+      <Aanwijzers media={media} theme={theme} fit="cover" />
     </div>
   )
 }
+
+/**
+ * Rekent een positie in beeldfracties om naar fracties van het kader waarin de
+ * afbeelding wordt getoond.
+ *
+ * De editor bewaart aanwijzers als fracties van de vólledige afbeelding. In de
+ * speler is de foto echter bijgesneden (object-fit: cover met het brandpunt als
+ * object-position, plus eventueel zoom) of juist geletterboxt (contain, bij een
+ * grafiek). Zonder omrekening wijst een punt dan naast zijn onderwerp zodra het
+ * kader een andere verhouding heeft dan de foto — op een telefoon vrijwel
+ * altijd.
+ */
+function beeldNaarKader(
+  ax: number,
+  ay: number,
+  media: Media,
+  kader: { w: number; h: number },
+  fit: 'cover' | 'contain',
+): { x: number; y: number } {
+  const { width: w, height: h } = media
+  // Onbekende beeldmaten (sommige SVG's): geen omrekening mogelijk; de oude
+  // benadering is dan het beste dat we hebben.
+  if (!w || !h || !kader.w || !kader.h) return { x: ax, y: ay }
+
+  const { focalX, focalY, zoom } = media.adjust
+  const s = fit === 'cover' ? Math.max(kader.w / w, kader.h / h) : Math.min(kader.w / w, kader.h / h)
+  // object-position: bij cover volgt die het brandpunt, bij contain het midden.
+  const px = fit === 'cover' ? focalX : 0.5
+  const py = fit === 'cover' ? focalY : 0.5
+  let x = (ax * w * s + (kader.w - w * s) * px) / kader.w
+  let y = (ay * h * s + (kader.h - h * s) * py) / kader.h
+
+  // transform: scale(zoom) heeft zijn oorsprong in het brandpunt (media.ts).
+  if (fit === 'cover' && zoom !== 1) {
+    x = focalX + (x - focalX) * zoom
+    y = focalY + (y - focalY) * zoom
+  }
+  return { x, y }
+}
+
+const klem01 = (n: number, marge = 0.02) => Math.min(1 - marge, Math.max(marge, n))
 
 /**
  * Aanwijzers op het beeld, in drie smaken uit dezelfde bouwsteen:
@@ -254,73 +295,118 @@ function Beeld({
  * - punt of picto zonder tekst — een markering, bijvoorbeeld op een kaart;
  * - los tekstblok zonder punt en lijn — vrij op het beeld te plaatsen.
  *
- * Alle posities staan in fracties, dus alles beweegt mee met het
- * schermformaat. 'Pas tonen bij aanwijzen' reageert ook op toetsenbordfocus
- * en aantikken — op een telefoon bestaat 'aanwijzen' niet.
+ * De laag meet zichzelf en rekent alle posities om van beeld- naar
+ * kaderfracties, zodat een punt op de wolf óók op de wolf staat als de foto op
+ * een telefoon smal is uitgesneden. Valt het anker daarbij buiten de zichtbare
+ * uitsnede, dan verdwijnt de hele aanwijzer — het onderwerp is dan immers niet
+ * in beeld. Een los tekstblok wordt juist binnen de rand geklemd.
  */
-function Aanwijzers({ annotations, theme }: { annotations: Annotation[]; theme: Theme }) {
+function Aanwijzers({
+  media,
+  theme,
+  fit,
+}: {
+  media: Media
+  theme: Theme
+  fit: 'cover' | 'contain'
+}) {
+  const laagRef = useRef<HTMLDivElement>(null)
+  const [kader, setKader] = useState({ w: 0, h: 0 })
+
+  useLayoutEffect(() => {
+    const el = laagRef.current
+    if (!el) return
+    const meet = () => {
+      const r = el.getBoundingClientRect()
+      setKader((oud) => (Math.abs(oud.w - r.width) < 0.5 && Math.abs(oud.h - r.height) < 0.5 ? oud : { w: r.width, h: r.height }))
+    }
+    meet()
+    const observer = new ResizeObserver(meet)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  const annotations = media.annotations
   if (annotations.length === 0) return null
   const extra = afgeleid(theme)
 
   return (
-    <div className="an-laag">
-      {annotations.map((a, i) => {
-        // Verbergen-bij-aanwijzen vraagt een punt om aan te wijzen; zonder
-        // punt is er niets om op te richten en blijft het blok gewoon staan.
-        const verborgen = a.reveal === 'hover' && a.line
-        return (
-          <div key={a.id} className={`an ${verborgen ? 'is-hover' : ''}`}>
-            {a.line && a.text && (
-              <svg className="an-svg" aria-hidden="true">
-                <line
-                  x1={`${a.x * 100}%`}
-                  y1={`${a.y * 100}%`}
-                  x2={`${a.bx * 100}%`}
-                  y2={`${a.by * 100}%`}
-                  stroke={theme.accent}
-                  strokeWidth="2"
-                />
-              </svg>
-            )}
+    <div className="an-laag" ref={laagRef}>
+      {kader.w > 0 &&
+        annotations.map((a, i) => {
+          const anker = beeldNaarKader(a.x, a.y, media, kader, fit)
+          const balRuw = beeldNaarKader(a.bx, a.by, media, kader, fit)
 
-            {a.text && (
-              <span
-                className="an-ballon"
-                style={{
-                  left: `${a.bx * 100}%`,
-                  top: `${a.by * 100}%`,
-                  background: theme.background,
-                  color: theme.text,
-                  borderColor: extra.axisLine,
-                }}
-              >
-                {a.text}
-              </span>
-            )}
+          if (a.line) {
+            // Anker buiten de uitsnede: het onderwerp is niet in beeld.
+            if (anker.x < -0.01 || anker.x > 1.01 || anker.y < -0.01 || anker.y > 1.01) {
+              return null
+            }
+          }
+          const bal = a.line
+            ? balRuw
+            : { x: klem01(balRuw.x, 0.04), y: klem01(balRuw.y, 0.05) }
 
-            {a.line &&
-              (a.icon ? (
-                <img
-                  className="an-icoon"
-                  src={a.icon}
-                  alt=""
-                  style={{ left: `${a.x * 100}%`, top: `${a.y * 100}%` }}
-                  tabIndex={verborgen ? 0 : -1}
-                  aria-label={verborgen ? a.text || `Aanwijzer ${i + 1}` : undefined}
-                />
-              ) : (
+          // Verbergen-bij-aanwijzen vraagt een punt om aan te wijzen; zonder
+          // punt is er niets om op te richten en blijft het blok gewoon staan.
+          const verborgen = a.reveal === 'hover' && a.line
+          return (
+            <div key={a.id} className={`an ${verborgen ? 'is-hover' : ''}`}>
+              {a.line && a.text && (
+                <svg className="an-svg" aria-hidden="true">
+                  <line
+                    x1={`${anker.x * 100}%`}
+                    y1={`${anker.y * 100}%`}
+                    x2={`${bal.x * 100}%`}
+                    y2={`${bal.y * 100}%`}
+                    stroke={theme.accent}
+                    strokeWidth="2"
+                  />
+                </svg>
+              )}
+
+              {a.text && (
                 <span
-                  className="an-punt"
-                  style={{ left: `${a.x * 100}%`, top: `${a.y * 100}%`, borderColor: theme.accent }}
-                  tabIndex={verborgen ? 0 : -1}
-                  aria-label={verborgen ? a.text || `Aanwijzer ${i + 1}` : undefined}
+                  className="an-ballon"
+                  style={{
+                    left: `${bal.x * 100}%`,
+                    top: `${bal.y * 100}%`,
+                    background: theme.background,
+                    color: theme.text,
+                    borderColor: extra.axisLine,
+                  }}
                 >
-                  <span className="an-kern" style={{ background: theme.accent }} />
+                  {a.text}
                 </span>
-              ))}
-          </div>
-        )
-      })}
+              )}
+
+              {a.line &&
+                (a.icon ? (
+                  <img
+                    className="an-icoon"
+                    src={a.icon}
+                    alt=""
+                    style={{ left: `${anker.x * 100}%`, top: `${anker.y * 100}%` }}
+                    tabIndex={verborgen ? 0 : -1}
+                    aria-label={verborgen ? a.text || `Aanwijzer ${i + 1}` : undefined}
+                  />
+                ) : (
+                  <span
+                    className="an-punt"
+                    style={{
+                      left: `${anker.x * 100}%`,
+                      top: `${anker.y * 100}%`,
+                      borderColor: theme.accent,
+                    }}
+                    tabIndex={verborgen ? 0 : -1}
+                    aria-label={verborgen ? a.text || `Aanwijzer ${i + 1}` : undefined}
+                  >
+                    <span className="an-kern" style={{ background: theme.accent }} />
+                  </span>
+                ))}
+            </div>
+          )
+        })}
     </div>
   )
 }

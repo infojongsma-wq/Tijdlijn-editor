@@ -32,6 +32,11 @@ export function ImageField({ media, onChange, cropped }: Props) {
   const [toonUitsnede, setToonUitsnede] = useState(false)
   const [actieveAanwijzer, setActieveAanwijzer] = useState<string | null>(null)
   const invoerRef = useRef<HTMLInputElement>(null)
+  // Tijdens het (asynchrone) inladen van een foto kan er gewoon doorgetypt
+  // worden; de afronding moet dan de actuele velden overnemen, niet de stand
+  // van vóór de upload.
+  const mediaRef = useRef(media)
+  mediaRef.current = media
 
   const kies = useCallback(
     async (file: File | undefined) => {
@@ -41,13 +46,15 @@ export function ImageField({ media, onChange, cropped }: Props) {
       try {
         const resultaat = await importImage(file)
         // Bijschrift, rechten, alt en aanwijzers overnemen als er al iets stond:
-        // je vervangt meestal de foto, niet de verantwoording eromheen.
-        if (media) {
-          resultaat.media.alt = media.alt
-          resultaat.media.caption = media.caption
-          resultaat.media.credit = media.credit
-          resultaat.media.adjust = { ...media.adjust }
-          resultaat.media.annotations = media.annotations
+        // je vervangt meestal de foto, niet de verantwoording eromheen. Uit de
+        // ref, want tijdens het inladen kan er verder gewerkt zijn.
+        const huidig = mediaRef.current
+        if (huidig) {
+          resultaat.media.alt = huidig.alt
+          resultaat.media.caption = huidig.caption
+          resultaat.media.credit = huidig.credit
+          resultaat.media.adjust = { ...huidig.adjust }
+          resultaat.media.annotations = huidig.annotations
         }
         setMeldingen(resultaat.warnings)
         onChange(resultaat.media, 'beeld')
@@ -58,7 +65,7 @@ export function ImageField({ media, onChange, cropped }: Props) {
         if (invoerRef.current) invoerRef.current.value = ''
       }
     },
-    [media, onChange],
+    [onChange],
   )
 
   const pasAan = useCallback(
@@ -128,6 +135,7 @@ export function ImageField({ media, onChange, cropped }: Props) {
             `ballon:${id}`,
           )
         }}
+        onAanwijzerFocus={setActieveAanwijzer}
       />
 
       <div className="imgfield-bar">
@@ -282,6 +290,10 @@ function Aanwijzers({
   const pictoRef = useRef<HTMLInputElement>(null)
   const pictoVoor = useRef<string | null>(null)
   const [pictoFout, setPictoFout] = useState<string | null>(null)
+  // Tijdens het inladen van de picto kan de lijst veranderd zijn; de afronding
+  // hoort op de actuele lijst te werken, niet op die van vóór de upload.
+  const annotationsRef = useRef(annotations)
+  annotationsRef.current = annotations
 
   const kiesPicto = async (file: File | undefined) => {
     const doel = pictoVoor.current
@@ -291,7 +303,7 @@ function Aanwijzers({
     try {
       const icon = await importIcon(file)
       onWijzig(
-        annotations.map((x) => (x.id === doel ? { ...x, icon } : x)),
+        annotationsRef.current.map((x) => (x.id === doel ? { ...x, icon } : x)),
         `aanwijzer-picto:${doel}`,
       )
     } catch (e) {
@@ -359,7 +371,7 @@ function Aanwijzers({
                   onClick={() =>
                     onWijzig(
                       annotations.filter((x) => x.id !== a.id),
-                      'aanwijzer-verwijderen',
+                      `aanwijzer-verwijderen:${a.id}`,
                     )
                   }
                 >
@@ -450,6 +462,7 @@ function FocalPicker({
   onFocal,
   onAanwijzer,
   onBallon,
+  onAanwijzerFocus,
 }: {
   media: Media
   interactief: boolean
@@ -458,6 +471,7 @@ function FocalPicker({
   onFocal: (x: number, y: number) => void
   onAanwijzer: (id: string, x: number, y: number) => void
   onBallon: (id: string, x: number, y: number) => void
+  onAanwijzerFocus: (id: string) => void
 }) {
   const vlakRef = useRef<HTMLDivElement>(null)
   /** Wat er versleept wordt: 'focal', 'a:<id>' (anker) of 'b:<id>' (ballon). */
@@ -474,6 +488,7 @@ function FocalPicker({
   }, [])
 
   const opPointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return
     const el = e.target as HTMLElement
     const ballon = el.closest('[data-ballon]')?.getAttribute('data-ballon')
     const anker = el.closest('[data-aanwijzer]')?.getAttribute('data-aanwijzer')
@@ -482,11 +497,13 @@ function FocalPicker({
     e.currentTarget.setPointerCapture(e.pointerId)
     sleept.current = ballon ? `b:${ballon}` : anker ? `a:${anker}` : 'focal'
 
-    const f = fractie(e.clientX, e.clientY)
-    if (!f) return
-    if (ballon) onBallon(ballon, f.x, f.y)
-    else if (anker) onAanwijzer(anker, f.x, f.y)
-    else onFocal(f.x, f.y)
+    // Alleen een klik op de fóto verplaatst meteen (het brandpunt); een klik
+    // op een handvat laat het staan tot er echt gesleept wordt — anders
+    // verschuift elk aanklikken de aanwijzer al een stukje.
+    if (!ballon && !anker) {
+      const f = fractie(e.clientX, e.clientY)
+      if (f) onFocal(f.x, f.y)
+    }
   }
 
   const opPointerMove = (e: React.PointerEvent) => {
@@ -502,23 +519,45 @@ function FocalPicker({
     sleept.current = null
   }
 
+  /** Pijltjes verplaatsen wat de focus heeft: een handvat, of anders het
+   *  brandpunt. Zo zijn anker en ballon ook zonder muis te plaatsen. */
   const opToets = (e: React.KeyboardEvent) => {
-    if (!interactief) return
     const stap = e.shiftKey ? 0.1 : 0.02
-    const { focalX: x, focalY: y } = media.adjust
-    const richting: Record<string, [number, number]> = {
+    const richtingen: Record<string, [number, number]> = {
       ArrowLeft: [-stap, 0],
       ArrowRight: [stap, 0],
       ArrowUp: [0, -stap],
       ArrowDown: [0, stap],
     }
-    const delta = richting[e.key]
+    const delta = richtingen[e.key]
     if (!delta) return
+
+    const doel = e.target as HTMLElement
+    const ballon = doel.closest('[data-ballon]')?.getAttribute('data-ballon')
+    const anker = doel.closest('[data-aanwijzer]')?.getAttribute('data-aanwijzer')
+    const klem = (n: number) => Number(Math.min(1, Math.max(0, n)).toFixed(4))
+
+    if (ballon) {
+      const a = media.annotations.find((x) => x.id === ballon)
+      if (!a) return
+      e.preventDefault()
+      e.stopPropagation()
+      onBallon(ballon, klem(a.bx + delta[0]), klem(a.by + delta[1]))
+      return
+    }
+    if (anker) {
+      const a = media.annotations.find((x) => x.id === anker)
+      if (!a) return
+      e.preventDefault()
+      e.stopPropagation()
+      onAanwijzer(anker, klem(a.x + delta[0]), klem(a.y + delta[1]))
+      return
+    }
+
+    if (!interactief) return
+    const { focalX: x, focalY: y } = media.adjust
     e.preventDefault()
-    onFocal(
-      Number(Math.min(1, Math.max(0, x + delta[0])).toFixed(4)),
-      Number(Math.min(1, Math.max(0, y + delta[1])).toFixed(4)),
-    )
+    onFocal(klem(x + delta[0]), klem(y + delta[1]))
   }
 
   const beeldVerhouding = media.width && media.height ? media.width / media.height : 16 / 9
@@ -615,8 +654,12 @@ function FocalPicker({
               data-aanwijzer={a.id}
               className={`focal-an is-icon ${a.id === actieveAanwijzer ? 'is-active' : ''}`}
               style={{ left: `${a.x * 100}%`, top: `${a.y * 100}%` }}
-              title={`Picto ${i + 1} — sleep naar waar hij moet staan`}
+              title={`Picto ${i + 1} — sleep, of verplaats met de pijltjestoetsen`}
               draggable={false}
+              tabIndex={0}
+              role="button"
+              aria-label={`Picto ${i + 1}, verplaats met de pijltjestoetsen`}
+              onFocus={() => onAanwijzerFocus(a.id)}
             />
           ) : (
             <span
@@ -624,7 +667,11 @@ function FocalPicker({
               data-aanwijzer={a.id}
               className={`focal-an ${a.id === actieveAanwijzer ? 'is-active' : ''}`}
               style={{ left: `${a.x * 100}%`, top: `${a.y * 100}%` }}
-              title={`Anker van ballon ${i + 1} — sleep naar waar de lijn moet wijzen`}
+              title={`Anker van ballon ${i + 1} — sleep, of verplaats met de pijltjestoetsen`}
+              tabIndex={0}
+              role="button"
+              aria-label={`Anker van tekstballon ${i + 1}, verplaats met de pijltjestoetsen`}
+              onFocus={() => onAanwijzerFocus(a.id)}
             />
           ),
         )}
@@ -635,7 +682,11 @@ function FocalPicker({
           data-ballon={a.id}
           className={`focal-bal ${a.id === actieveAanwijzer ? 'is-active' : ''}`}
           style={{ left: `${a.bx * 100}%`, top: `${a.by * 100}%` }}
-          title={`Ballon ${i + 1}${a.text ? ` — ${a.text}` : ''} — sleep naar waar de tekst moet staan`}
+          title={`Ballon ${i + 1}${a.text ? ` — ${a.text}` : ''} — sleep, of verplaats met de pijltjestoetsen`}
+          tabIndex={0}
+          role="button"
+          aria-label={`Tekstballon ${i + 1}, verplaats met de pijltjestoetsen`}
+          onFocus={() => onAanwijzerFocus(a.id)}
         >
           {i + 1}
         </span>

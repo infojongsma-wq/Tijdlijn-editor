@@ -84,8 +84,10 @@ export async function importImage(file: File): Promise<ImportResult> {
   }
 
   const schaal = MAX_EDGE / langsteZijde
-  const breedte = Math.round(bronBreedte * schaal)
-  const hoogte = Math.round(bronHoogte * schaal)
+  // Nooit tot 0 afronden: een extreem langwerpig beeld (bijv. 8000×2) geeft
+  // anders een canvas zonder hoogte en een lege data-URL.
+  const breedte = Math.max(1, Math.round(bronBreedte * schaal))
+  const hoogte = Math.max(1, Math.round(bronHoogte * schaal))
 
   const canvas = document.createElement('canvas')
   canvas.width = breedte
@@ -96,8 +98,10 @@ export async function importImage(file: File): Promise<ImportResult> {
   ctx.drawImage(bitmap, 0, 0, breedte, hoogte)
   close(bitmap)
 
-  // PNG met doorzichtigheid blijft PNG; de rest wordt JPEG.
-  const doelType = file.type === 'image/png' ? 'image/png' : 'image/jpeg'
+  // Doorzichtigheid behouden: PNG en WebP kunnen een alfakanaal hebben, en
+  // JPEG maakt dat zwart. De rest wordt JPEG.
+  const doelType =
+    file.type === 'image/png' || file.type === 'image/webp' ? 'image/png' : 'image/jpeg'
   const verkleind = canvas.toDataURL(doelType, 0.85)
 
   warnings.push({

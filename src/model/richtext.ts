@@ -107,7 +107,15 @@ export function tekstNaarHtml(tekst: string): string {
     .replace(/\n/g, '<br>')
 }
 
-/** Bevat deze waarde al opmaak, of is het nog platte tekst? */
+/**
+ * Bevat deze waarde al opmaak, of is het nog platte tekst?
+ *
+ * Ook een HTML-entiteit telt als opmaak: de editor bewaart de tekst als HTML,
+ * dus "Kat & hond" staat opgeslagen als "Kat &amp; hond" — óók zonder één
+ * opmaaktag. Wie dat als platte tekst aanziet, escapet de entiteit bij elk
+ * herladen opnieuw en de kaart toont dan letterlijk "&amp;", elke keer één
+ * "amp;" langer.
+ */
 export function isHtml(waarde: string): boolean {
-  return /<(br|strong|em|span|b|i|p|div)\b/i.test(waarde)
+  return /<(br|strong|em|span|b|i|p|div)\b|&(amp|lt|gt|quot|#\d+|#x[0-9a-f]+);/i.test(waarde)
 }

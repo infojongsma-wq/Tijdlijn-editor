@@ -99,9 +99,13 @@ export async function saveToFile(doc: TimelineDoc): Promise<void> {
         await downloads.save({ filename: naam, data: inhoud })
         return
       }
-    } catch {
-      // Geweigerd of niet beschikbaar: hieronder gewoon de normale weg.
-      return
+    } catch (e) {
+      // Zei de gebruiker zelf nee, dan is stoppen het juiste antwoord — een
+      // download alsnog forceren zou de weigering omzeilen. Elke andere fout
+      // (brug kapot, mogelijkheid uitgeschakeld) valt door naar de gewone
+      // download hieronder; anders lijkt de Opslaan-knop stilletjes stuk.
+      const code = (e as { code?: string } | null)?.code
+      if (code === 'declined') return
     }
   }
 

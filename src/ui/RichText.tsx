@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { LICHT_CLASS, sanitizeRich } from '../model/richtext'
+import { LICHT_CLASS, platteTekst, sanitizeRich } from '../model/richtext'
 import { RICH_KLEUREN } from '../model/palette'
 
 interface Props {
@@ -32,7 +32,9 @@ export function RichText({ value, onChange, rows = 6, placeholder, ariaLabel }: 
     const el = veldRef.current
     if (!el) return
     const schoon = sanitizeRich(el.innerHTML)
-    onChange(schoon)
+    // Een leeggemaakt veld laat vaak een kale <br> achter; dat is voor de rest
+    // van de app géén lege tekst en breekt bijv. de terugval van het citaat.
+    onChange(platteTekst(schoon).trim() === '' ? '' : schoon)
   }, [onChange])
 
   /** Zet de selectie in een omhulsel. Voor vet en cursief kan de browser dit
@@ -92,16 +94,17 @@ export function RichText({ value, onChange, rows = 6, placeholder, ariaLabel }: 
   return (
     <div className="rt">
       <div className="rt-bar" role="toolbar" aria-label="Tekstopmaak">
-        <button type="button" className="rt-btn rt-bold" onClick={() => opdracht('bold')} title="Vet (Ctrl+B)">
+        <button type="button" className="rt-btn rt-bold" onClick={() => opdracht('bold')} title="Vet (Ctrl+B)" aria-label="Vet">
           B
         </button>
-        <button type="button" className="rt-btn rt-ital" onClick={() => opdracht('italic')} title="Cursief (Ctrl+I)">
+        <button type="button" className="rt-btn rt-ital" onClick={() => opdracht('italic')} title="Cursief (Ctrl+I)" aria-label="Cursief">
           I
         </button>
         <button
           type="button"
           className="rt-btn rt-light"
           title="Dun"
+          aria-label="Dun gewicht"
           onClick={() =>
             omhul(() => {
               const span = document.createElement('span')
@@ -138,6 +141,7 @@ export function RichText({ value, onChange, rows = 6, placeholder, ariaLabel }: 
           className="rt-btn rt-wis"
           onClick={wisKleur}
           title="Kleur weghalen — terug naar de gewone tekstkleur"
+          aria-label="Kleur weghalen"
         >
           ⌫
         </button>

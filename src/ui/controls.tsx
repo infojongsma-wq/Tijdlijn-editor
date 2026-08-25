@@ -86,6 +86,7 @@ export function NumberInput({
   max,
   placeholder,
   width,
+  ariaLabel,
 }: {
   value: number | undefined
   onChange: (v: number | undefined) => void
@@ -93,6 +94,8 @@ export function NumberInput({
   max?: number
   placeholder?: string
   width?: number
+  /** Voor schermlezers; een placeholder als 'mm' is als enige naam dubbelzinnig. */
+  ariaLabel?: string
 }) {
   return (
     <input
@@ -102,6 +105,7 @@ export function NumberInput({
       min={min}
       max={max}
       placeholder={placeholder}
+      aria-label={ariaLabel ?? placeholder}
       style={width ? { width } : undefined}
       value={value === undefined ? '' : value}
       onChange={(e) => {
@@ -206,6 +210,7 @@ export function Slider({
         max={max}
         step={step}
         value={value}
+        aria-label={label}
         onChange={(e) => onChange(Number(e.target.value))}
       />
     </div>

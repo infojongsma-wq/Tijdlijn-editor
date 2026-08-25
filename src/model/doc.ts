@@ -119,7 +119,7 @@ export function normaliseDoc(raw: unknown): TimelineDoc {
     version: DOC_VERSION,
     name: typeof input.name === 'string' && input.name ? input.name : basis.name,
     settings: { ...basis.settings, ...(input.settings ?? {}) },
-    theme: { ...basis.theme, ...(input.theme ?? {}) },
+    theme: veiligThema(input.theme, basis.theme),
     cards,
   }
 }
@@ -131,7 +131,7 @@ function normaliseCard(raw: unknown): Card {
   const input = raw as Partial<Card>
   const media = input.media
     ? {
-        src: String(input.media.src ?? ''),
+        src: veiligeSrc(String(input.media.src ?? '')),
         mime: String(input.media.mime ?? 'image/jpeg'),
         width: Number(input.media.width) || 0,
         height: Number(input.media.height) || 0,
@@ -200,6 +200,33 @@ function normaliseAnnotations(raw: unknown): Annotation[] {
  * gebruikersinvoer, zodat de speler nooit "undefined januari" toont en sortKey
  * nooit NaN oplevert.
  */
+/**
+ * Een geopend bestand is niet te vertrouwen. Beeld hoort ingebed te zijn
+ * (data:) of, voor het meegeleverde voorbeeld, een relatief pad. Een absolute
+ * URL met schema — http(s), javascript, wat dan ook — gaat eruit: die zou bij
+ * de kijker een extern adres aanroepen zodra de kaart in beeld komt.
+ */
+function veiligeSrc(src: string): string {
+  if (src.startsWith('data:image/') || src.startsWith('blob:')) return src
+  if (/^[a-z][a-z0-9+.-]*:/i.test(src)) return ''
+  return src
+}
+
+/** Alleen echte hex-kleuren; via een bestand binnengekomen CSS zoals
+ *  url(…) hoort nooit in een style-attribuut te belanden. */
+function veiligThema(raw: unknown, basis: TimelineDoc['theme']): TimelineDoc['theme'] {
+  const input = (raw ?? {}) as Record<string, unknown>
+  const kleur = (waarde: unknown, terugval: string) =>
+    typeof waarde === 'string' && /^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(waarde.trim())
+      ? waarde.trim()
+      : terugval
+  return {
+    background: kleur(input.background, basis.background),
+    text: kleur(input.text, basis.text),
+    accent: kleur(input.accent, basis.accent),
+  }
+}
+
 function normaliseDate(raw: unknown): PartialDate | null {
   if (!raw || typeof raw !== 'object') return null
   const d = raw as Partial<PartialDate>

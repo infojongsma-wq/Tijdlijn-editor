@@ -1,4 +1,5 @@
 import type { Theme } from './types'
+import { contrastRatio } from './contrast'
 
 /**
  * Het kleurenpalet van RTV Oost.
@@ -180,11 +181,17 @@ export function afgeleid(thema: Theme): AfgeleideKleuren {
 
 export function isLicht(hex: string): boolean {
   const { r, g, b } = hexNaarRgb(hex)
-  // Snelle helderheidsmaat; goed genoeg om wit of donkerblauw te kiezen.
+  // Snelle helderheidsmaat; goed genoeg voor de logo-keuze in de editor.
   return (r * 299 + g * 587 + b * 114) / 1000 > 150
 }
 
-/** De tekstkleur die het beste op deze achtergrond leest. */
+/**
+ * De tekstkleur die het beste op deze achtergrond leest — gemeten met de echte
+ * WCAG-contrastformule, niet geschat. De snelle helderheidsmaat koos op Oost
+ * Oranje nog wit (contrast 2,9:1) waar donkerblauw 4,9:1 haalt.
+ */
 export function tekstVoor(achtergrond: string): string {
-  return isLicht(achtergrond) ? OOST_DONKERBLAUW : OOST_WIT
+  return contrastRatio(OOST_WIT, achtergrond) >= contrastRatio(OOST_DONKERBLAUW, achtergrond)
+    ? OOST_WIT
+    : OOST_DONKERBLAUW
 }

@@ -55,6 +55,7 @@ export function CardForm({ card, onChange }: Props) {
               min={1}
               max={31}
               placeholder="dag"
+              ariaLabel="Dag"
               width={62}
               onChange={(v) => zetDatum(date.year, date.month, v, date.hour, date.minute)}
             />
@@ -63,6 +64,7 @@ export function CardForm({ card, onChange }: Props) {
               min={1}
               max={12}
               placeholder="mnd"
+              ariaLabel="Maand"
               width={62}
               onChange={(v) => zetDatum(date.year, v, date.day, date.hour, date.minute)}
             />
@@ -71,6 +73,7 @@ export function CardForm({ card, onChange }: Props) {
               min={1}
               max={9999}
               placeholder="jaar"
+              ariaLabel="Jaar"
               width={74}
               onChange={(v) => zetDatum(v, date.month, date.day, date.hour, date.minute)}
             />
@@ -80,6 +83,7 @@ export function CardForm({ card, onChange }: Props) {
               min={0}
               max={23}
               placeholder="uu"
+              ariaLabel="Uur"
               width={56}
               onChange={(v) => zetDatum(date.year, date.month, date.day, v, date.minute)}
             />
@@ -88,6 +92,7 @@ export function CardForm({ card, onChange }: Props) {
               min={0}
               max={59}
               placeholder="mm"
+              ariaLabel="Minuut"
               width={56}
               onChange={(v) =>
                 zetDatum(date.year, date.month, date.day, date.hour ?? 0, v)
