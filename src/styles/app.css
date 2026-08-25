@@ -1279,6 +1279,17 @@
 .badgerij {
   display: flex;
   gap: 6px;
+  align-items: center;
+}
+/* De lijst met suggesties mag niet de hele rij opeten: het tekstveld ernaast
+   is waar je je eigen woord kwijt kunt. */
+.badgerij .inp-select {
+  flex: 0 0 auto;
+  max-width: 46%;
+}
+.badgerij .inp:not(.inp-select) {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 /* ---------- compacte kleurstalen per tekstballon ---------- */

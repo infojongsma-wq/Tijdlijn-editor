@@ -81,12 +81,16 @@ function TitleCard({ card, theme }: { card: Card; theme: Theme }) {
     <article className="pc pc-title">
       {card.media && <Beeld media={card.media} theme={theme} veil="strong" />}
       <Inner className="pc-center">
-        <span
-          className="pc-badge"
-          style={{ background: theme.accent, color: afgeleid(theme).onAccent }}
-        >
-          {card.badge || 'Dossier'}
-        </span>
+        {/* Leeg label betekent: geen blokje. Eerder viel het hier terug op
+            'Dossier', waardoor het onmogelijk was het weg te laten. */}
+        {card.badge && (
+          <span
+            className="pc-badge"
+            style={{ background: theme.accent, color: afgeleid(theme).onAccent }}
+          >
+            {card.badge}
+          </span>
+        )}
         <Kop card={card} niveau={1} />
         {card.subtitle && <p className="pc-standfirst">{card.subtitle}</p>}
         <p className="pc-hint" aria-hidden="true">

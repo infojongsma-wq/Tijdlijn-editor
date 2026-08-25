@@ -167,7 +167,9 @@ function normaliseCard(raw: unknown): Card {
     // zodat er niets verloren gaat en er niets ongefilterds binnenkomt.
     body: leesTekst(input.body),
     body2: leesTekst(input.body2),
-    badge: typeof input.badge === 'string' && input.badge.trim() ? input.badge : basis.badge,
+    // Ontbreekt het veld, dan is het een ouder bestand en geldt de standaard.
+    // Staat het er leeg in, dan is dat een keuze: geen blokje.
+    badge: typeof input.badge === 'string' ? input.badge.trim() : basis.badge,
     headingColor: veiligeKleurOfNull(input.headingColor),
     bodyColor: veiligeKleurOfNull(input.bodyColor),
     compareLayout:

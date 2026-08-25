@@ -149,22 +149,11 @@ export function CardForm({ card, onChange }: Props) {
 
       {isTitel && (
         <Field
+          group
           label="Label bovenaan"
-          hint="Het blokje boven de titel. Kies een suggestie of typ je eigen woord."
+          hint="Het blokje boven de titel. Kies een suggestie of typ je eigen woord. Laat het leeg als je geen blokje wilt."
         >
-          <div className="badgerij">
-            <TextInput
-              value={card.badge}
-              placeholder="Dossier"
-              list="badge-suggesties"
-              onChange={(v) => onChange({ badge: v }, 'badge')}
-            />
-            <datalist id="badge-suggesties">
-              {BADGES.map((b) => (
-                <option key={b} value={b} />
-              ))}
-            </datalist>
-          </div>
+          <BadgeKiezer value={card.badge} onChange={(v) => onChange({ badge: v }, 'badge')} />
         </Field>
       )}
 
@@ -333,6 +322,47 @@ export function CardForm({ card, onChange }: Props) {
           onChange={(v) => onChange({ source: v }, 'bron')}
         />
       </Field>
+    </div>
+  )
+}
+
+/**
+ * Het label boven de titel: een uitklaplijst met suggesties naast een vrij
+ * tekstveld.
+ *
+ * Eerder stonden de suggesties in een `datalist` achter het tekstveld. Dat is
+ * onvindbaar — de lijst verschijnt pas als je begint te typen of het pijltje
+ * precies raakt — waardoor het label in de praktijk altijd op 'Dossier' bleef
+ * staan. Nu is de keuze meteen zichtbaar, en blijft het tekstveld ernaast
+ * staan zodat je er ook je eigen woord in kunt zetten.
+ *
+ * Leegmaken betekent: geen blokje. Staat er iets eigens in, dan toont de lijst
+ * dat als extra regel, zodat de lijst nooit iets anders beweert dan er staat.
+ */
+function BadgeKiezer({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const bekend = BADGES.includes(value)
+  return (
+    <div className="badgerij">
+      <select
+        className="inp inp-select"
+        aria-label="Suggestie voor het label"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">Geen label</option>
+        {!bekend && value !== '' && <option value={value}>Eigen tekst: {value}</option>}
+        {BADGES.map((b) => (
+          <option key={b} value={b}>
+            {b}
+          </option>
+        ))}
+      </select>
+      <TextInput
+        value={value}
+        placeholder="Geen label"
+        aria-label="Tekst van het label"
+        onChange={onChange}
+      />
     </div>
   )
 }
