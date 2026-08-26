@@ -57,6 +57,43 @@ publiceren.
   Escape sluit hem weer.
 - **Opslaan en openen** — als bestand op je eigen computer (Ctrl+S). Tussentijds
   bewaart de editor automatisch, zodat een dichtgeklapte laptop niets kost.
+- **Exporteren voor de site** — de knop *Embed* maakt van je tijdlijn één
+  HTML-bestand met alles erin: de speler, je foto's en de fonts. Dat bestand
+  zet je op de webserver en haal je met een iframe in een artikel. Geen server,
+  geen database, geen tweede bestand dat mee moet.
+
+## Een tijdlijn op de site zetten
+
+De knop **Embed** in de editor levert één HTML-bestand op, vernoemd naar je
+tijdlijn — bijvoorbeeld `de-wolf-in-overijssel.html`. Daar zit alles in wat
+nodig is om hem te tonen, dus hij kan los op elke webserver staan.
+
+1. Zet het bestand op de webserver, bijvoorbeeld in een map `/tijdlijnen/`.
+2. Plak dit in het artikel, met dat adres erin:
+
+```html
+<iframe
+  src="https://rtvoost.nl/tijdlijnen/de-wolf-in-overijssel.html"
+  title="Tijdlijn: De wolf in Overijssel"
+  loading="lazy"
+  style="width:100%; aspect-ratio:16/9; min-height:520px; border:0;"
+></iframe>
+```
+
+De editor toont deze regels na het exporteren, met een knop om ze te kopiëren.
+
+Een iframe groeit niet mee met zijn inhoud, en dat is hier de bedoeling: de
+tijdlijn is een vak waarin de lezer scrolt, niet iets dat over de volle lengte
+van het artikel uitrolt. De kaarten passen zich aan de maat van dat vak aan —
+een smal vak levert vanzelf de mobiele indeling op.
+
+Reken op ongeveer anderhalve tot twee megabyte voor een dossier van zeven
+foto's. Met `loading="lazy"` laadt het bestand pas als de lezer in de buurt
+komt.
+
+Let op: wat je exporteert wordt gepubliceerd. Het voorbeelddossier bevat foto's
+van derden en is testmateriaal — daar hoort eigen of gelicentieerd beeld in
+voordat er iets online gaat.
 
 ## Online zetten met Vercel
 
@@ -90,8 +127,9 @@ Hiervoor is [Node.js](https://nodejs.org) 20 of nieuwer nodig.
 ```bash
 npm install
 npm run dev          # editor op http://localhost:5173
-npm run build        # gewone site in dist/
-SINGLEFILE=1 npm run build   # één zelfstandig bestand in dist-singlefile/
+npm run build        # kijk-pagina + gewone site in dist/
+npm run build:viewer # alleen de kijk-pagina, in dist-viewer/
+npm run build:single # één zelfstandig bestand in dist-singlefile/
 npm run typecheck    # controleert de types
 ```
 
@@ -123,11 +161,20 @@ src/
     contrast.ts   contrastcontrole volgens WCAG
     demo.ts       het wolvendossier als testmateriaal
   player/     wat de kijker ziet
+  viewer/     de kijk-pagina: alleen de speler, voor de embed
   ui/         wat de redacteur bedient
   styles/     huisstijl-tokens, editor en speler
 ```
 
 ### Keuzes die uitleg verdienen
+
+**De embed is een sjabloon met een gaatje.** De kijk-pagina wordt apart
+gebouwd tot één zelfstandig HTML-bestand met een leeg script-blok erin. De
+editor leest dat bestand in als tekst en vult bij het exporteren het blok met
+jouw tijdlijn. Daarom bouwt `npm run build` eerst de kijk-pagina en dan pas de
+editor. Foto's die nog een verwijzing zijn — het voorbeelddossier — worden bij
+het exporteren alsnog in het bestand opgenomen; anders zie je pas dat ze kapot
+zijn als de tijdlijn online staat.
 
 **Foto's zitten in het document.** Er is geen koppeling met de beeldbank, dus
 een foto wordt als `data:`-URL in het bestand opgeslagen. Om te voorkomen dat
@@ -162,5 +209,4 @@ tijdlijn begint, gooit het weg met *Nieuw*.
 
 De vijf andere tijdlijnvormen (filmstrip, duo-cards, magazine, headlines,
 horizontaal), links in de lopende tekst, knoppen onder de tekst, hoofdstukken,
-het inklappen van lege perioden, video en de embed-keten met meegroeiende
-hoogte.
+het inklappen van lege perioden, en video.

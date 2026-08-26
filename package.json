@@ -6,11 +6,12 @@
   "description": "Tijdlijn-editor voor RTV Oost: dossiers als interactief verhaal",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && npm run build:viewer && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
-    "build:single": "SINGLEFILE=1 vite build",
-    "smoke": "node scripts/smoke.mjs"
+    "build:single": "npm run build:viewer && SINGLEFILE=1 vite build",
+    "smoke": "node scripts/smoke.mjs",
+    "build:viewer": "vite build --config vite.viewer.config.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

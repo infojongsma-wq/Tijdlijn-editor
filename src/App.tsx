@@ -4,6 +4,7 @@ import { emptyCard, emptyDoc, orderedCards } from './model/doc'
 import { useHistory, MAX_STEPS } from './model/history'
 import { autosave, clearAutosave, loadAutosave, openFromFile, saveToFile } from './model/storage'
 import { demoDoc } from './model/demo'
+import { embedCode, exportEmbed } from './model/embed'
 import { CardList } from './ui/CardList'
 import { CardForm } from './ui/CardForm'
 import { SettingsPanel } from './ui/SettingsPanel'
@@ -25,6 +26,8 @@ export function App() {
   )
   const [tab, setTab] = useState<Tab>('inhoud')
   const [bekijk, setBekijk] = useState(false)
+  /** De iframe-code na een geslaagde export; null = dialoog dicht. */
+  const [embed, setEmbed] = useState<string | null>(null)
   const [melding, setMelding] = useState<string | null>(null)
   const bestandRef = useRef<HTMLInputElement>(null)
   // Eén melding over mislukt bewaren is genoeg; hem elke wijziging herhalen
@@ -172,43 +175,27 @@ export function App() {
     [history],
   )
 
+  /**
+   * Exporteert de tijdlijn als embed en laat daarna zien hoe je hem plaatst.
+   * De iframe-code erbij, want zonder die regel heeft het bestand geen nut en
+   * gaat de redacteur hem toch ergens opzoeken.
+   */
+  const exporteer = useCallback(async () => {
+    try {
+      await exportEmbed(doc)
+      setEmbed(embedCode(doc))
+    } catch (e) {
+      setMelding(e instanceof Error ? e.message : 'Het exporteren is niet gelukt.')
+    }
+  }, [doc])
+
   const volledigRef = useRef<HTMLDivElement>(null)
   const bekijkKnopRef = useRef<HTMLButtonElement>(null)
-  useEffect(() => {
-    if (!bekijk) return
-    // Focus de dialoog in, houd Tab erbinnen, en geef de focus bij het sluiten
-    // terug aan de knop die hem opende — anders belandt een toetsenbord-
-    // gebruiker na Escape ergens onderin de pagina.
-    volledigRef.current?.focus()
-    const opToets = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setBekijk(false)
-        return
-      }
-      if (e.key !== 'Tab') return
-      const dialoog = volledigRef.current
-      if (!dialoog) return
-      const focusbaar = dialoog.querySelectorAll<HTMLElement>(
-        'button, [href], [tabindex]:not([tabindex="-1"])',
-      )
-      if (focusbaar.length === 0) return
-      const eerste = focusbaar[0]
-      const laatste = focusbaar[focusbaar.length - 1]
-      const actief = document.activeElement
-      if (e.shiftKey && (actief === eerste || actief === dialoog)) {
-        e.preventDefault()
-        laatste.focus()
-      } else if (!e.shiftKey && actief === laatste) {
-        e.preventDefault()
-        eerste.focus()
-      }
-    }
-    window.addEventListener('keydown', opToets)
-    return () => {
-      window.removeEventListener('keydown', opToets)
-      bekijkKnopRef.current?.focus()
-    }
-  }, [bekijk])
+  const embedRef = useRef<HTMLDivElement>(null)
+  const embedKnopRef = useRef<HTMLButtonElement>(null)
+
+  useDialoog(bekijk, volledigRef, () => setBekijk(false), bekijkKnopRef)
+  useDialoog(embed !== null, embedRef, () => setEmbed(null), embedKnopRef)
 
   // Sneltoetsen. Niet onderscheppen terwijl iemand in een tekstveld typt —
   // daar heeft de browser zijn eigen ongedaan-maken.
@@ -272,6 +259,15 @@ export function App() {
           </Button>
           <Button onClick={nieuw}>Nieuw</Button>
           <Button onClick={() => bestandRef.current?.click()}>Openen</Button>
+          <button
+            type="button"
+            className="btn"
+            ref={embedKnopRef}
+            onClick={() => void exporteer()}
+            title="Maakt één HTML-bestand dat je met een iframe op de site zet"
+          >
+            Embed
+          </button>
           <Button onClick={() => void saveToFile(doc)} variant="primary" title="Ctrl+S">
             Opslaan
           </Button>
@@ -314,6 +310,39 @@ export function App() {
             {/* Zonder focusCardId: hier begin je bij het begin van het verhaal,
                 niet bij de kaart die je toevallig aan het bewerken was. */}
             <Player doc={doc} />
+          </div>
+        </div>
+      )}
+
+      {embed !== null && (
+        <div
+          className="embed-waas"
+          role="dialog"
+          aria-modal="true"
+          aria-label="De tijdlijn op de site zetten"
+          ref={embedRef}
+          tabIndex={-1}
+        >
+          <div className="embed-doos">
+            <h2 className="embed-kop">Het bestand staat in je downloads</h2>
+            <p className="embed-uitleg">
+              Eén HTML-bestand met alles erin: de tijdlijn, je foto's en de fonts. Er
+              hoeft niets naast te staan.
+            </p>
+            <ol className="embed-stappen">
+              <li>Zet het bestand op de webserver, bijvoorbeeld in een map <code>/tijdlijnen/</code>.</li>
+              <li>Vul dat adres hieronder in bij <code>src</code>.</li>
+              <li>Plak deze regels in het artikel.</li>
+            </ol>
+            <textarea className="embed-code" readOnly rows={6} value={embed} aria-label="Code om te plakken" />
+            <div className="embed-knoppen">
+              <Button onClick={() => void navigator.clipboard?.writeText(embed)}>
+                Kopieer de code
+              </Button>
+              <Button onClick={() => setEmbed(null)} variant="primary" title="Sluiten (Esc)">
+                Klaar
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -397,4 +426,54 @@ export function App() {
       </div>
     </div>
   )
+}
+
+
+/**
+ * Een dialoog die zich gedraagt: focus erin bij openen, Tab blijft erbinnen,
+ * Escape sluit, en de focus gaat bij het sluiten terug naar de knop die hem
+ * opende. Zonder dat laatste belandt een toetsenbordgebruiker na Escape ergens
+ * onderin de pagina en is hij de draad kwijt.
+ */
+function useDialoog(
+  open: boolean,
+  dialoogRef: React.RefObject<HTMLDivElement>,
+  sluit: () => void,
+  terugNaar: React.RefObject<HTMLElement>,
+) {
+  useEffect(() => {
+    if (!open) return
+    dialoogRef.current?.focus()
+    const opToets = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        sluit()
+        return
+      }
+      if (e.key !== 'Tab') return
+      const dialoog = dialoogRef.current
+      if (!dialoog) return
+      const focusbaar = dialoog.querySelectorAll<HTMLElement>(
+        'button, [href], textarea, [tabindex]:not([tabindex="-1"])',
+      )
+      if (focusbaar.length === 0) return
+      const eerste = focusbaar[0]
+      const laatste = focusbaar[focusbaar.length - 1]
+      const actief = document.activeElement
+      if (e.shiftKey && (actief === eerste || actief === dialoog)) {
+        e.preventDefault()
+        laatste.focus()
+      } else if (!e.shiftKey && actief === laatste) {
+        e.preventDefault()
+        eerste.focus()
+      }
+    }
+    window.addEventListener('keydown', opToets)
+    return () => {
+      window.removeEventListener('keydown', opToets)
+      terugNaar.current?.focus()
+    }
+    // De sluitfunctie wordt bij elke tekening opnieuw gemaakt; hem in de lijst
+    // zetten zou de luisteraar elke keer opnieuw ophangen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 }

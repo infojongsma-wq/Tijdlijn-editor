@@ -1,0 +1,19 @@
+/* De kijk-pagina vult zijn kader helemaal: in een iframe bepaalt de hoogte van
+   dat kader hoe groot de kaarten worden. */
+body {
+  background: transparent;
+  overflow: hidden;
+}
+
+.viewer-leeg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--ui-ink-faint);
+  background: var(--ui-ground);
+}

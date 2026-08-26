@@ -85,9 +85,21 @@ interface OpslagBrug {
 }
 
 export async function saveToFile(doc: TimelineDoc): Promise<void> {
-  const inhoud = JSON.stringify(doc, null, 2)
-  const naam = safeFileName(doc.name) + EXT
+  await bewaarBestand(safeFileName(doc.name) + EXT, JSON.stringify(doc, null, 2), 'application/json')
+}
 
+/**
+ * Een bestand bij de gebruiker afleveren.
+ *
+ * Gedeeld door het opslaan van een tijdlijn en het exporteren van een embed:
+ * dat zijn dezelfde stappen met andere inhoud, en één plek betekent dat een
+ * omgeving die downloads anders afhandelt maar op één plek geregeld hoeft.
+ */
+export async function bewaarBestand(
+  naam: string,
+  inhoud: string,
+  mime: string,
+): Promise<void> {
   // Draait de editor in een omgeving die downloads zelf afhandelt — zoals een
   // ingesloten voorvertoning — dan loopt het opslaan daarlangs. Een gewone
   // downloadlink doet daar namelijk niets, en dan lijkt de knop stuk.
@@ -103,13 +115,13 @@ export async function saveToFile(doc: TimelineDoc): Promise<void> {
       // Zei de gebruiker zelf nee, dan is stoppen het juiste antwoord — een
       // download alsnog forceren zou de weigering omzeilen. Elke andere fout
       // (brug kapot, mogelijkheid uitgeschakeld) valt door naar de gewone
-      // download hieronder; anders lijkt de Opslaan-knop stilletjes stuk.
+      // download hieronder; anders lijkt de knop stilletjes stuk.
       const code = (e as { code?: string } | null)?.code
       if (code === 'declined') return
     }
   }
 
-  const blob = new Blob([inhoud], { type: 'application/json' })
+  const blob = new Blob([inhoud], { type: mime })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
