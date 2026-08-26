@@ -195,6 +195,12 @@ export interface Card {
 
   /** Alleen bij type 'compare'. */
   compareLayout: CompareLayout
+  /** De achtergrond van de hele vergelijkkaart; null = volg de tijdlijn. */
+  compareBackdrop: string | null
+  /** Een vlak achter de ene en de andere helft, om het verschil ook in kleur
+   *  zichtbaar te maken. null = geen vlak. */
+  compareTintA: string | null
+  compareTintB: string | null
   /** Het tweede beeld en de tweede tekst van een vergelijkkaart. */
   media2: Media | null
   body2: string

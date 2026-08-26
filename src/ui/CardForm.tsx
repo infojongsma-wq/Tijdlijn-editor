@@ -181,14 +181,47 @@ export function CardForm({ card, onChange }: Props) {
       )}
 
       {card.type === 'compare' && (
-        <Field group label="Indeling" hint="Wat naast elkaar komt te staan.">
-          <Segmented
-            label="Indeling van de vergelijkkaart"
-            value={card.compareLayout}
-            onChange={(v) => onChange({ compareLayout: v })}
-            options={INDELINGEN}
-          />
-        </Field>
+        <>
+          <Field group label="Indeling" hint="Wat naast elkaar komt te staan.">
+            <Segmented
+              label="Indeling van de vergelijkkaart"
+              value={card.compareLayout}
+              onChange={(v) => onChange({ compareLayout: v })}
+              options={INDELINGEN}
+            />
+          </Field>
+
+          <Field
+            group
+            label="Vlak achter de eerste helft"
+            hint="Geef de twee helften elk een eigen kleur en het verschil valt meteen op. De schuine streep is geen vlak."
+          >
+            <Stalen
+              kleuren={KADER_KLEUREN}
+              waarde={card.compareTintA}
+              volgLabel="Geen vlak"
+              onKies={(hex) => onChange({ compareTintA: hex })}
+            />
+          </Field>
+
+          <Field group label="Vlak achter de tweede helft">
+            <Stalen
+              kleuren={KADER_KLEUREN}
+              waarde={card.compareTintB}
+              volgLabel="Geen vlak"
+              onKies={(hex) => onChange({ compareTintB: hex })}
+            />
+          </Field>
+
+          <Field group label="Achtergrond van de kaart" hint="Waar beide helften op liggen.">
+            <Stalen
+              kleuren={ACHTERGRONDEN}
+              waarde={card.compareBackdrop}
+              volgLabel="Volg de tijdlijn"
+              onKies={(hex) => onChange({ compareBackdrop: hex })}
+            />
+          </Field>
+        </>
       )}
 
       {typeUsesBody(card.type) && !isTitel && (
