@@ -11,8 +11,14 @@ publiceren.
 
 - **Editor** — momenten toevoegen, datum, kop, tekst en beeld invullen. De
   volgorde volgt automatisch uit de datum.
-- **Zes soorten kaarten** — titelkaart, beeld met tekst, alleen beeld, alleen
-  tekst, citaat en graphic. Om te wisselen zonder je werk kwijt te raken.
+- **Zeven soorten kaarten** — titelkaart, beeld met tekst, alleen beeld, alleen
+  tekst, citaat, graphic en vergelijken. Om te wisselen zonder je werk kwijt te
+  raken.
+- **Vergelijken** — twee beelden met één tekst, twee beelden met twee teksten,
+  of één beeld met twee teksten. Beide beelden krijgen altijd dezelfde maat en
+  beide tekstblokken ook; is de ene tekst korter, dan blijft er onderin ruimte
+  over in plaats van dat het beeld ernaast groter wordt. Elke helft kan een
+  eigen gekleurd vlak krijgen, zodat het verschil ook in kleur te zien is.
 - **Tekstopmaak** — vet, cursief, dun, en losse woorden in een kleur: wit en
   donkerblauw om terug te keren naar gewoon, de zes merkkleuren, en de zes
   zachte tinten uit de huisstijl als nuance. Geplakte tekst uit Word komt

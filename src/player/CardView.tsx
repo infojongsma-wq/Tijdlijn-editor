@@ -381,44 +381,92 @@ function GraphicCard({ card, theme, datum }: { card: Card; theme: Theme; datum: 
  * smal scherm komen de kolommen onder elkaar te staan; naast elkaar vergelijken
  * lukt op een telefoon toch niet.
  */
+/**
+ * De vergelijkkaart: twee dingen naast elkaar zetten.
+ *
+ * Alles staat in één raster in plaats van in twee losse kolommen. Dat is het
+ * verschil: kolommen bepalen ieder hun eigen hoogte, dus een langere tekst
+ * links maakte de foto links kleiner dan die rechts. In een raster delen beide
+ * beelden één rij en beide teksten één rij, dus zijn ze altijd even groot. Een
+ * kortere tekst laat onderin ruimte over — precies wat je bij een vergelijking
+ * wilt, want het oog moet de beelden kunnen vergelijken, niet de kaders.
+ */
 function CompareCard({ card, theme, datum }: { card: Card; theme: Theme; datum: string }) {
   const indeling = card.compareLayout
-  const tweeBeelden = indeling !== 'een-beeld-twee-tekst'
-  const tweeTeksten = indeling !== 'twee-beeld-een-tekst'
+
+  // Een leeg tekstblok houdt zijn vak in het raster. Body geeft bij lege tekst
+  // niets terug; zonder deze omhulling zou het tweede tekstblok dan in het vak
+  // van het eerste belanden en klopte de hele indeling niet meer.
+  // Een tint achter een helft maakt het verschil ook in kleur zichtbaar. De
+  // tekstkleur gaat mee, anders staat donkere tekst op een donkere tint.
+  const vlak = (tint: string | null): CSSProperties | undefined =>
+    tint ? { background: tint, color: tekstVoor(tint) } : undefined
+
+  const tekstvak = (html: string, tint: string | null) => (
+    <div className={`pc-comparetekst ${tint ? 'heeft-vlak' : ''}`} style={vlak(tint)}>
+      <Body html={html} kleur={card.bodyColor} />
+    </div>
+  )
 
   return (
-    <article className={`pc pc-compare is-${indeling}`}>
+    <article
+      className={`pc pc-compare is-${indeling}`}
+      style={
+        card.compareBackdrop
+          ? { background: card.compareBackdrop, color: tekstVoor(card.compareBackdrop) }
+          : undefined
+      }
+    >
       <Inner>
         <Meta datum={datum} theme={theme} />
         <Kop card={card} niveau={3} />
 
         <div className="pc-comparegrid">
-          <div className="pc-comparekolom">
-            <MediaVak media={card.media} theme={theme} />
-            {tweeTeksten && <Body html={card.body} kleur={card.bodyColor} />}
-          </div>
-
-          <div className="pc-comparekolom">
-            {tweeBeelden ? (
-              <MediaVak media={card.media2} theme={theme} />
-            ) : (
-              <Body html={card.body} kleur={card.bodyColor} />
-            )}
-            {tweeTeksten && <Body html={card.body2} kleur={card.bodyColor} />}
-          </div>
+          {indeling === 'een-beeld-twee-tekst' ? (
+            <>
+              <MediaVak media={card.media} theme={theme} tint={card.compareTintA} />
+              {tekstvak(card.body, card.compareTintA)}
+              {tekstvak(card.body2, card.compareTintB)}
+            </>
+          ) : (
+            <>
+              <MediaVak media={card.media} theme={theme} tint={card.compareTintA} />
+              <MediaVak media={card.media2} theme={theme} tint={card.compareTintB} />
+              {indeling === 'twee-beeld-twee-tekst' && (
+                <>
+                  {tekstvak(card.body, card.compareTintA)}
+                  {tekstvak(card.body2, card.compareTintB)}
+                </>
+              )}
+            </>
+          )}
         </div>
 
-        {!tweeTeksten && <Body html={card.body} kleur={card.bodyColor} />}
+        {indeling === 'twee-beeld-een-tekst' && (
+          <Body html={card.body} kleur={card.bodyColor} />
+        )}
         <Bijschriften card={card} />
       </Inner>
     </article>
   )
 }
 
-function MediaVak({ media, theme }: { media: Media | null; theme: Theme }) {
+function MediaVak({
+  media,
+  theme,
+  tint,
+}: {
+  media: Media | null
+  theme: Theme
+  /** Een gekleurd vlak om de foto heen; null = geen vlak. */
+  tint?: string | null
+}) {
   if (!media) return <Empty theme={theme} />
   return (
-    <div className="pc-comparebeeld">
+    <div
+      className={`pc-comparebeeld ${tint ? 'heeft-vlak' : ''}`}
+      style={tint ? { background: tint } : undefined}
+    >
       <div className="pc-mediabox">
         <img src={media.src} alt={media.alt} style={mediaStyle(media, 'cover')} />
         <Aanwijzers media={media} theme={theme} fit="cover" />

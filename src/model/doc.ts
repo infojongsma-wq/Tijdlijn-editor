@@ -52,6 +52,9 @@ export function emptyCard(type: CardType = 'image-text'): Card {
     headingColor: null,
     bodyColor: null,
     compareLayout: 'twee-beeld-een-tekst',
+    compareBackdrop: null,
+    compareTintA: null,
+    compareTintB: null,
     media2: null,
     body2: '',
     graphicFit: 'kader',
@@ -162,8 +165,14 @@ export function normaliseDoc(raw: unknown): TimelineDoc {
  * donkere sluier over een lichte kaart.
  */
 export function kaartThema(card: Card, thema: Theme): Theme {
-  if (card.type !== 'quote' || card.quoteStyle !== 'naast') return thema
-  return { ...thema, background: card.quoteBackdrop, text: tekstVoor(card.quoteBackdrop) }
+  const eigen =
+    card.type === 'quote' && card.quoteStyle === 'naast'
+      ? card.quoteBackdrop
+      : card.type === 'compare'
+        ? card.compareBackdrop
+        : null
+  if (!eigen) return thema
+  return { ...thema, background: eigen, text: tekstVoor(eigen) }
 }
 
 function normaliseCard(raw: unknown): Card {
@@ -210,6 +219,9 @@ function normaliseCard(raw: unknown): Card {
       input.compareLayout === 'een-beeld-twee-tekst'
         ? input.compareLayout
         : basis.compareLayout,
+    compareBackdrop: veiligeKleurOfNull(input.compareBackdrop),
+    compareTintA: veiligeKleurOfNull(input.compareTintA),
+    compareTintB: veiligeKleurOfNull(input.compareTintB),
     graphicFit: input.graphicFit === 'vullend' ? 'vullend' : 'kader',
     graphicFrameColor: veiligeKleurOfNull(input.graphicFrameColor) ?? basis.graphicFrameColor,
     media,
