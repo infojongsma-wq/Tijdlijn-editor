@@ -3,6 +3,7 @@ import type { Card, Media, Theme } from '../model/types'
 import { formatDate } from '../model/dates'
 import { sanitizeRich } from '../model/richtext'
 import { afgeleid, rgba, tekstVoor } from '../model/palette'
+import { contrastRatio } from '../model/contrast'
 import { mediaStyle, creditLine } from './media'
 
 interface Props {
@@ -188,7 +189,21 @@ function TextCard({ card, theme, datum }: { card: Card; theme: Theme; datum: str
  *             kaartformaat.
  */
 function QuoteCard({ card, theme, datum }: { card: Card; theme: Theme; datum: string }) {
-  const inhoud = <QuoteInhoud card={card} theme={theme} datum={datum} />
+  // In een kader ligt de tekst niet op de tijdlijnkleur maar op de kleur van
+  // het kader. Tekst én accent moeten dat volgen, anders staat het
+  // aanhalingsteken in Oost Blauw op een blauw kader — onzichtbaar.
+  const vlakThema: Theme = {
+    ...theme,
+    text: tekstVoor(card.quoteFrameColor),
+    accent: accentOp(theme.accent, card.quoteFrameColor),
+  }
+  const inhoud = (
+    <QuoteInhoud
+      card={card}
+      theme={card.quoteStyle === 'over' ? theme : vlakThema}
+      datum={datum}
+    />
+  )
 
   if (card.quoteStyle === 'naast') {
     const lijn = lijnKleur(card, card.quoteBackdrop)
@@ -262,6 +277,19 @@ function kaderPlek(x: number, y: number): CSSProperties {
     top: `${y * 100}%`,
     transform: `translate(${x * -100}%, ${y * -100}%)`,
   }
+}
+
+/**
+ * De accentkleur zoals hij op dít vlak werkt.
+ *
+ * Het aanhalingsteken en de datumstip staan in de accentkleur van de tijdlijn.
+ * Ligt daaronder een kader met een eigen kleur, dan kan die accentkleur
+ * wegvallen: Oost Blauw op een blauw kader is niet te zien. Is het verschil te
+ * klein — onder 3:1, de ondergrens die WCAG voor grote tekst en grafische
+ * elementen aanhoudt — dan volgen ze de tekstkleur van het kader.
+ */
+function accentOp(accent: string, achtergrond: string): string {
+  return contrastRatio(accent, achtergrond) >= 3 ? accent : tekstVoor(achtergrond)
 }
 
 /** De lijn om de kaders; null = geen lijn. */
