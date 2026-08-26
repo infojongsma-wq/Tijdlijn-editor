@@ -602,6 +602,12 @@
   .vp-axis-right .pc-inner {
     padding-right: 52px;
   }
+  .vp-axis-left .pc-quote {
+    --rand-links: 52px;
+  }
+  .vp-axis-right .pc-quote {
+    --rand-rechts: 52px;
+  }
 
   /* Alle datums naast elkaar passen hier niet, maar zónder datum weet de lezer
      niet waar in de tijd hij is. Daarom blijft de datum van het moment dat in
@@ -640,6 +646,12 @@
   .vp-axis-bottom .pc-inner {
     padding-bottom: 74px;
   }
+  .vp-axis-top .pc-quote {
+    --rand-boven: 74px;
+  }
+  .vp-axis-bottom .pc-quote {
+    --rand-onder: 74px;
+  }
 }
 
 @container (min-width: 561px) {
@@ -648,6 +660,12 @@
   }
   .vp-axis-right .pc-inner {
     padding-right: clamp(160px, 12cqi, 200px);
+  }
+  .vp-axis-left .pc-quote {
+    --rand-links: clamp(160px, 12cqi, 200px);
+  }
+  .vp-axis-right .pc-quote {
+    --rand-rechts: clamp(160px, 12cqi, 200px);
   }
 
   /* Staat de tekst naast het beeld, dan ligt de as over de fotokolom en niet
@@ -669,6 +687,12 @@
   }
   .vp-axis-bottom .pc-inner {
     padding-bottom: 90px;
+  }
+  .vp-axis-top .pc-quote {
+    --rand-boven: 90px;
+  }
+  .vp-axis-bottom .pc-quote {
+    --rand-onder: 90px;
   }
 }
 
@@ -835,9 +859,88 @@
 .pc-body [data-kleur='zachtgroen'],
 .pc-quotetext [data-kleur='zachtgroen'] { color: #f5f7ec; }
 
+/* ---------- citaat: over de foto, in een verschuifbaar kader, of ernaast ---------- */
+
 .pc-quotepanel {
-  border-radius: 16px;
+  /* Licht afgerond, in dezelfde maat als de andere kaders in de speler. */
+  border-radius: var(--radius-card);
   padding: clamp(18px, 3.4cqi, 40px);
+  /* Past het citaat niet in het kader, dan krimpt de tekst stap voor stap
+     (zie Inner in CardView) in plaats van dat er een scrollbalkje verschijnt. */
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* De marges van een citaatkaart. Andere kaarten houden ruimte voor de as vrij
+   met opvulling op .pc-inner, maar hier zweven de kaders in een eigen vlak;
+   daarom staat de rand in variabelen die de as verderop kan verruimen. Zonder
+   dat liep de as dwars over het fotokader. */
+.pc-quote {
+  --rand: clamp(20px, 4cqi, 60px);
+  --rand-links: var(--rand);
+  --rand-rechts: var(--rand);
+  --rand-boven: var(--rand);
+  --rand-onder: var(--rand);
+}
+
+/* Het vlak waarbinnen het citaatkader mag staan: de kaart minus zijn marge.
+   `inset` en niet `padding`, want de plaatsing van het kader rekent met het
+   opvulvak van dit element — met padding zou het kader de marge negeren. */
+.pc-quotearea {
+  position: absolute;
+  inset: var(--rand-boven) var(--rand-rechts) var(--rand-onder) var(--rand-links);
+}
+.pc-quotearea .pc-quotepanel {
+  position: absolute;
+  width: min(52ch, 100%);
+}
+
+/* Citaat en foto naast elkaar op een gekleurd vlak. */
+.pc-quoteduo {
+  position: absolute;
+  inset: var(--rand-boven) var(--rand-rechts) var(--rand-onder) var(--rand-links);
+  display: flex;
+  gap: clamp(12px, 2.2cqi, 28px);
+}
+.pc-quoteduo.is-links {
+  flex-direction: row;
+}
+.pc-quoteduo.is-rechts {
+  flex-direction: row-reverse;
+}
+.pc-quoteduo.is-boven {
+  flex-direction: column;
+}
+.pc-quoteduo.is-onder {
+  flex-direction: column-reverse;
+}
+
+.pc-quotefoto {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+.pc-quoteduo .pc-quotepanel {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Naast elkaar past niet op een telefoon: daar gaat de foto boven of onder de
+   tekst, in dezelfde volgorde als de redacteur koos. */
+@container (max-width: 560px) {
+  .pc-quoteduo.is-links {
+    flex-direction: column;
+  }
+  .pc-quoteduo.is-rechts {
+    flex-direction: column-reverse;
+  }
 }
 
 /* Eigen picto in plaats van de standaardstip. */
@@ -928,4 +1031,22 @@
   max-width: 72ch;
   width: auto;
   display: block;
+}
+
+
+/* De as neemt de kleuren over van de kaart die in beeld staat. Tussen een
+   gewone kaart en een citaat met eigen achtergrond zou dat een harde omslag
+   zijn halverwege het scrollen; een korte overgang maakt er een verloop van.
+   Wie zo min mogelijk beweging wil, krijgt de omslag zonder overgang. */
+.ax,
+.ax-label,
+.ax-counter {
+  transition: color 220ms ease, background-color 220ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ax,
+  .ax-label,
+  .ax-counter {
+    transition: none;
+  }
 }

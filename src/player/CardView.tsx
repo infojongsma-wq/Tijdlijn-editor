@@ -1,8 +1,8 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import type { Card, Media, Theme } from '../model/types'
 import { formatDate } from '../model/dates'
 import { sanitizeRich } from '../model/richtext'
-import { afgeleid, tekstVoor } from '../model/palette'
+import { afgeleid, rgba, tekstVoor } from '../model/palette'
 import { mediaStyle, creditLine } from './media'
 
 interface Props {
@@ -47,7 +47,20 @@ export function CardView({ card, theme, showTime }: Props) {
  * wordt de tekst stap voor stap iets kleiner tot hij past, zoals een titeldia
  * in PowerPoint, met een ondergrens zodat het leesbaar blijft.
  */
-function Inner({ className = '', children }: { className?: string; children: ReactNode }) {
+function Inner({
+  className = '',
+  base = 'pc-inner',
+  style,
+  children,
+}: {
+  className?: string
+  /** De grondklasse van het vlak dat moet passen. Standaard de hele kaart,
+   *  maar bij een citaat in een kader is het kader zelf het vlak met een vaste
+   *  maat — daar moet de tekst zich naar voegen, niet naar de kaart. */
+  base?: string
+  style?: CSSProperties
+  children: ReactNode
+}) {
   const ref = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
@@ -70,7 +83,7 @@ function Inner({ className = '', children }: { className?: string; children: Rea
   })
 
   return (
-    <div ref={ref} className={`pc-inner ${className}`}>
+    <div ref={ref} className={`${base} ${className}`.trim()} style={style}>
       {children}
     </div>
   )
@@ -161,39 +174,126 @@ function TextCard({ card, theme, datum }: { card: Card; theme: Theme; datum: str
   )
 }
 
+/**
+ * Het citaat in drie vormen.
+ *
+ * - `over`  — de foto wordt gedimd, de tekst staat er los overheen.
+ * - `kader` — de foto blijft vol in kleur en het citaat krijgt een eigen vlak
+ *             dat je over de foto kunt verschuiven. Nodig omdat een citaat
+ *             midden op de kaart nu juist het gezicht kan bedekken waar het
+ *             over gaat.
+ * - `naast` — citaat en foto staan elk in een eigen kader op een gekleurd
+ *             vlak. De foto is dan geen achtergrond meer maar zelfstandig
+ *             beeld, dus hij wordt niet gedimd en niet bijgesneden tot
+ *             kaartformaat.
+ */
 function QuoteCard({ card, theme, datum }: { card: Card; theme: Theme; datum: string }) {
-  // Met kader blijft de foto vol in kleur en draagt het gekleurde vlak de
-  // leesbaarheid; zonder kader dimt de sluier de foto, zoals voorheen.
-  const kader = card.quoteFrame
+  const inhoud = <QuoteInhoud card={card} theme={theme} datum={datum} />
+
+  if (card.quoteStyle === 'naast') {
+    const lijn = lijnKleur(card, card.quoteBackdrop)
+    return (
+      <article
+        className="pc pc-quote is-naast"
+        style={{ background: card.quoteBackdrop, color: tekstVoor(card.quoteBackdrop) }}
+      >
+        <div className={`pc-quoteduo is-${card.quoteSide}`}>
+          <div className="pc-quotefoto" style={omlijning(lijn)}>
+            <MediaVak media={card.media} theme={theme} />
+          </div>
+          <Inner
+            base="pc-quotepanel"
+            style={{
+              background: card.quoteFrameColor,
+              color: tekstVoor(card.quoteFrameColor),
+              ...omlijning(lijn),
+            }}
+          >
+            {inhoud}
+          </Inner>
+        </div>
+      </article>
+    )
+  }
+
+  if (card.quoteStyle === 'kader') {
+    const lijn = lijnKleur(card, card.quoteFrameColor)
+    return (
+      <article className="pc pc-quote is-kader">
+        {card.media && <Beeld media={card.media} theme={theme} veil="none" />}
+        <div className="pc-quotearea">
+          <Inner
+            base="pc-quotepanel"
+            style={{
+              background: card.quoteFrameColor,
+              color: tekstVoor(card.quoteFrameColor),
+              ...omlijning(lijn),
+              ...kaderPlek(card.quoteBoxX, card.quoteBoxY),
+            }}
+          >
+            {inhoud}
+          </Inner>
+        </div>
+      </article>
+    )
+  }
 
   return (
     <article className="pc pc-quote">
-      {card.media && <Beeld media={card.media} theme={theme} veil={kader ? 'none' : 'strong'} />}
-      <Inner className="pc-middle">
-        <div
-          className={kader ? 'pc-quotepanel' : undefined}
-          style={
-            kader
-              ? { background: card.quoteFrameColor, color: tekstVoor(card.quoteFrameColor) }
-              : undefined
-          }
-        >
-          <Meta datum={datum} theme={theme} />
-          <blockquote className="pc-quotetext">
-            <span className="pc-quotemark" style={{ color: theme.accent }} aria-hidden="true">
-              “
-            </span>
-            {card.body ? (
-              <span dangerouslySetInnerHTML={{ __html: sanitizeRich(card.body) }} />
-            ) : (
-              card.title
-            )}
-          </blockquote>
-          {card.quoteAttribution && <p className="pc-attrib">{card.quoteAttribution}</p>}
-          <Credit card={card} />
-        </div>
-      </Inner>
+      {card.media && <Beeld media={card.media} theme={theme} veil="strong" />}
+      <Inner className="pc-middle">{inhoud}</Inner>
     </article>
+  )
+}
+
+/**
+ * De plek van het citaatkader, als fractie van het vrije vlak.
+ *
+ * De truc: verschuif het kader met dezelfde fractie als waarop je het zet. Bij
+ * 0 staat het op 0% en schuift het 0% terug — tegen de linkerrand. Bij 1 staat
+ * het op 100% en schuift het zijn volle breedte terug — tegen de rechterrand.
+ * Bij 0,5 precies in het midden. Daardoor blijft het kader altijd binnen de
+ * kaart, wat de breedte van het scherm ook is; met een gewone middelpunt-
+ * positie zou het op een telefoon half buiten beeld vallen.
+ */
+function kaderPlek(x: number, y: number): CSSProperties {
+  return {
+    left: `${x * 100}%`,
+    top: `${y * 100}%`,
+    transform: `translate(${x * -100}%, ${y * -100}%)`,
+  }
+}
+
+/** De lijn om de kaders; null = geen lijn. */
+function lijnKleur(card: Card, achtergrond: string): string | null {
+  if (!card.quoteBorder) return null
+  // Geen eigen kleur gekozen? Dan de tekstkleur van het vlak eronder, gedempt.
+  // Zo is de lijn op een licht én op een donker kader te zien.
+  return card.quoteBorderColor ?? rgba(tekstVoor(achtergrond), 0.28)
+}
+
+function omlijning(kleur: string | null): CSSProperties {
+  return kleur ? { border: `1px solid ${kleur}` } : {}
+}
+
+/** De inhoud van een citaat, gelijk in alle drie de vormen. */
+function QuoteInhoud({ card, theme, datum }: { card: Card; theme: Theme; datum: string }) {
+  return (
+    <>
+      <Meta datum={datum} theme={theme} />
+      <blockquote className="pc-quotetext">
+        <span className="pc-quotemark" style={{ color: theme.accent }} aria-hidden="true">
+          “
+        </span>
+        {card.body ? (
+          <span dangerouslySetInnerHTML={{ __html: sanitizeRich(card.body) }} />
+        ) : (
+          card.title
+        )}
+      </blockquote>
+      {card.quoteAttribution && <p className="pc-attrib">{card.quoteAttribution}</p>}
+      <Credit card={card} />
+    </>
   )
 }
 
