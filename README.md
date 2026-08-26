@@ -29,9 +29,13 @@ publiceren.
 - **Verticaal scrollen met duw-overgang** — de kaarten duwen elkaar omhoog,
   zoals de overgang 'duwen' in PowerPoint. Loslaten betekent altijd op een
   hele kaart landen; het verhaal blijft nooit tussen twee kaarten in hangen.
-- **Citaat met of zonder kader** — standaard wordt de foto gedimd om de tekst
-  leesbaar te houden; zet je het kader aan, dan blijft de foto vol in kleur en
-  krijgt het citaat een eigen vlak in een huisstijlkleur naar keuze.
+- **Citaat in drie vormen** — *over de foto*: de foto wordt gedimd om de tekst
+  leesbaar te houden. *In een kader*: de foto blijft vol in kleur en het citaat
+  krijgt een eigen vlak dat je over de foto versleept, zodat het gezicht waar
+  het over gaat vrij blijft. *Naast elkaar*: citaat en foto elk in een eigen
+  kader — links, rechts, boven of onder — op een gekleurd vlak. Bij de laatste
+  twee kun je een dunne lijn om de kaders zetten; de hoeken zijn licht
+  afgerond. Op een telefoon komen de kaders altijd onder elkaar.
 - **Tekst past altijd** — de lezer scrolt alleen door het verhaal, nooit
   binnen een kaart. Past de inhoud niet, dan wordt de tekst stapsgewijs iets
   verkleind tot hij past, met een ondergrens.

@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Card, Settings, Theme } from '../model/types'
 import { rgba } from '../model/palette'
+import { kaartThema } from '../model/doc'
 import { CardView } from './CardView'
 import { Axis } from './Axis'
 
@@ -164,6 +165,11 @@ export function VerticalPlayer({
   // stop van de eerstvolgende kaart die er wel een heeft.
   const asPositie = asPositieVoor(progress, axisIndex)
 
+  // De as leest de kleuren van de kaart die in beeld staat, niet van de
+  // tijdlijn als geheel. Een citaat 'naast elkaar' brengt namelijk zijn eigen
+  // achtergrond mee; zonder dit zouden de datums daar onleesbaar op staan.
+  const asThema = cards[huidig] ? kaartThema(cards[huidig], theme) : theme
+
   return (
     <div
       className={`vp vp-axis-${settings.axis}`}
@@ -177,14 +183,15 @@ export function VerticalPlayer({
         ['--veil-2' as string]: rgba(theme.background, 0.6),
         ['--veil-3' as string]: rgba(theme.background, 0.12),
         ['--veil-4' as string]: rgba(theme.background, 0),
-        // De sluier onder de as en de schaduw achter de datums volgen dezelfde
-        // themakleur. Hard zwart maakte op een licht thema een grauwe veeg en
-        // wazige cijfers.
-        ['--ax-veil-1' as string]: rgba(theme.background, 0.55),
-        ['--ax-veil-0' as string]: rgba(theme.background, 0),
-        ['--ax-shadow' as string]: rgba(theme.background, 0.9),
+        // De sluier onder de as en de schaduw achter de datums volgen de kaart
+        // die in beeld staat. Hard zwart maakte op een licht thema een grauwe
+        // veeg en wazige cijfers; de tijdlijnkleur maakte hetzelfde probleem op
+        // een kaart met een eigen achtergrond.
+        ['--ax-veil-1' as string]: rgba(asThema.background, 0.55),
+        ['--ax-veil-0' as string]: rgba(asThema.background, 0),
+        ['--ax-shadow' as string]: rgba(asThema.background, 0.9),
         // Achtergrond van het datumchipje op smalle schermen.
-        ['--ax-chip' as string]: rgba(theme.background, 0.82),
+        ['--ax-chip' as string]: rgba(asThema.background, 0.82),
       }}
     >
       <div
@@ -247,7 +254,7 @@ export function VerticalPlayer({
         labels={axisLabels}
         progress={asPositie}
         position={settings.axis}
-        theme={theme}
+        theme={asThema}
         showProgress={settings.showProgress}
         showCounter={settings.showCounter}
         onJump={(stop) => {

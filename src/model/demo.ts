@@ -34,8 +34,11 @@ interface Bron {
   textPlacement?: Card['textPlacement']
   source?: string
   annotations?: Annotation[]
-  quoteFrame?: boolean
+  quoteStyle?: Card['quoteStyle']
   quoteFrameColor?: string
+  quoteBoxX?: number
+  quoteBoxY?: number
+  quoteBorder?: boolean
 }
 
 const BRONNEN: Bron[] = [
@@ -113,8 +116,12 @@ const BRONNEN: Bron[] = [
       'Ook als de beschermingsstatus omlaaggaat, blijft de wolf een beschermde diersoort. Afschot ' +
       'blijft gebonden aan strenge voorwaarden en aan een aantoonbaar probleem.',
     quoteAttribution: 'Daniel Tuitert, jurist en wolvenvrijwilliger uit Zwolle',
-    quoteFrame: true,
+    quoteStyle: 'kader',
     quoteFrameColor: '#F5F0E8',
+    // Naar links en omlaag, zodat de wolf rechts in beeld vrij blijft.
+    quoteBoxX: 0.08,
+    quoteBoxY: 0.82,
+    quoteBorder: true,
     image: beschermd,
     alt: 'Een wolf loopt langs een omheining.',
     credit: 'Getty Images',
@@ -186,8 +193,14 @@ function toCard(bron: Bron): Card {
     body: bron.body,
     subtitle: bron.subtitle ?? '',
     quoteAttribution: bron.quoteAttribution ?? '',
-    quoteFrame: bron.quoteFrame ?? false,
+    quoteStyle: bron.quoteStyle ?? 'over',
     quoteFrameColor: bron.quoteFrameColor ?? '#F5F0E8',
+    quoteBoxX: bron.quoteBoxX ?? 0.5,
+    quoteBoxY: bron.quoteBoxY ?? 0.5,
+    quoteSide: 'links',
+    quoteBackdrop: '#E7EEF9',
+    quoteBorder: bron.quoteBorder ?? false,
+    quoteBorderColor: null,
     textPlacement: bron.textPlacement ?? 'over',
     source: bron.source ?? '',
     media: bron.image

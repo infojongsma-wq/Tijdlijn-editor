@@ -5,11 +5,13 @@ import {
   type Card,
   type CardType,
   type PartialDate,
+  type QuoteStyle,
   type Settings,
+  type Theme,
   type TimelineDoc,
 } from './types'
 import { buildDate, sortKey } from './dates'
-import { THEMA_DONKER } from './palette'
+import { THEMA_DONKER, tekstVoor } from './palette'
 import { isHtml, sanitizeRich, tekstNaarHtml } from './richtext'
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -36,8 +38,14 @@ export function emptyCard(type: CardType = 'image-text'): Card {
     media: null,
     quoteAttribution: '',
     subtitle: '',
-    quoteFrame: false,
+    quoteStyle: 'over',
     quoteFrameColor: '#F5F0E8',
+    quoteBoxX: 0.5,
+    quoteBoxY: 0.5,
+    quoteSide: 'links',
+    quoteBackdrop: '#E7EEF9',
+    quoteBorder: false,
+    quoteBorderColor: null,
     textPlacement: 'over',
     source: '',
     badge: 'Dossier',
@@ -145,6 +153,19 @@ export function normaliseDoc(raw: unknown): TimelineDoc {
   }
 }
 
+/**
+ * Het thema zoals het op déze kaart geldt.
+ *
+ * De meeste kaarten staan op de achtergrondkleur van de tijdlijn, maar een
+ * citaat in de vorm 'naast elkaar' brengt zijn eigen gekleurde vlak mee. De as
+ * moet dat volgen: anders staan de datums in wit op lichtblauw, en ligt er een
+ * donkere sluier over een lichte kaart.
+ */
+export function kaartThema(card: Card, thema: Theme): Theme {
+  if (card.type !== 'quote' || card.quoteStyle !== 'naast') return thema
+  return { ...thema, background: card.quoteBackdrop, text: tekstVoor(card.quoteBackdrop) }
+}
+
 function normaliseCard(raw: unknown): Card {
   const basis = emptyCard()
   if (!raw || typeof raw !== 'object') return basis
@@ -157,17 +178,31 @@ function normaliseCard(raw: unknown): Card {
     ...basis,
     ...input,
     id: input.id ?? basis.id,
-    quoteFrame: input.quoteFrame === true,
+    // De citaatkaart had eerst alleen een aan/uit-schakelaar voor het kader.
+    // Bestanden van toen kennen `quoteStyle` nog niet; die worden hier omgezet
+    // zodat er niets van vorm verandert bij het openen.
+    quoteStyle: leesQuoteStyle(input),
     quoteFrameColor:
       typeof input.quoteFrameColor === 'string' && /^#[0-9a-f]{6}$/i.test(input.quoteFrameColor)
         ? input.quoteFrameColor
         : basis.quoteFrameColor,
+    quoteBoxX: fractie(input.quoteBoxX, basis.quoteBoxX),
+    quoteBoxY: fractie(input.quoteBoxY, basis.quoteBoxY),
+    quoteSide:
+      input.quoteSide === 'rechts' || input.quoteSide === 'boven' || input.quoteSide === 'onder'
+        ? input.quoteSide
+        : basis.quoteSide,
+    quoteBackdrop: veiligeKleurOfNull(input.quoteBackdrop) ?? basis.quoteBackdrop,
+    quoteBorder: input.quoteBorder === true,
+    quoteBorderColor: veiligeKleurOfNull(input.quoteBorderColor),
     date: normaliseDate(input.date) ?? basis.date,
     // Oudere bestanden bewaarden de tekst zonder opmaak; die wordt hier omgezet
     // zodat er niets verloren gaat en er niets ongefilterds binnenkomt.
     body: leesTekst(input.body),
     body2: leesTekst(input.body2),
-    badge: typeof input.badge === 'string' && input.badge.trim() ? input.badge : basis.badge,
+    // Ontbreekt het veld, dan is het een ouder bestand en geldt de standaard.
+    // Staat het er leeg in, dan is dat een keuze: geen blokje.
+    badge: typeof input.badge === 'string' ? input.badge.trim() : basis.badge,
     headingColor: veiligeKleurOfNull(input.headingColor),
     bodyColor: veiligeKleurOfNull(input.bodyColor),
     compareLayout:
@@ -203,6 +238,27 @@ function veiligeKleurOfNull(waarde: unknown): string | null {
   return typeof waarde === 'string' && /^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(waarde.trim())
     ? waarde.trim()
     : null
+}
+
+/**
+ * De vorm van de citaatkaart, ook uit bestanden van vóór `quoteStyle`.
+ *
+ * Die kenden alleen `quoteFrame`: aan betekende een gekleurd vlak over een
+ * volle foto, uit een gedimde foto met de tekst erover. Dat zijn nu 'kader'
+ * en 'over', dus een oud bestand gaat er ongewijzigd uitzien.
+ */
+function leesQuoteStyle(input: Partial<Card>): QuoteStyle {
+  const stijl = (input as { quoteStyle?: unknown }).quoteStyle
+  if (stijl === 'over' || stijl === 'kader' || stijl === 'naast') return stijl
+  return (input as { quoteFrame?: unknown }).quoteFrame === true ? 'kader' : 'over'
+}
+
+/** Een fractie tussen 0 en 1. Alles daarbuiten of onleesbaar valt terug op de
+ *  standaard; een NaN in een positie zou een kaart onzichtbaar maken. */
+function fractie(waarde: unknown, terugval: number): number {
+  return typeof waarde === 'number' && Number.isFinite(waarde)
+    ? Math.min(1, Math.max(0, waarde))
+    : terugval
 }
 
 function leesTekst(waarde: unknown): string {

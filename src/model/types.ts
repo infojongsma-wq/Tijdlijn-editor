@@ -43,6 +43,22 @@ export type CardType =
 /** Waar de tekst staat ten opzichte van het beeld. Alleen voor 'image-text'. */
 export type TextPlacement = 'over' | 'below' | 'beside'
 
+/**
+ * Hoe een citaat op zijn foto staat.
+ *
+ * - `over`   — de foto wordt gedimd en het citaat staat er los overheen.
+ * - `kader`  — de foto blijft vol in kleur, het citaat krijgt een eigen vlak
+ *              dat je over de foto kunt verschuiven zodat het onderwerp vrij
+ *              blijft.
+ * - `naast`  — citaat en foto staan elk in een eigen kader naast (of boven,
+ *              of onder) elkaar, op een gekleurd vlak. De foto wordt dan niet
+ *              als achtergrond gebruikt maar als zelfstandig beeld.
+ */
+export type QuoteStyle = 'over' | 'kader' | 'naast'
+
+/** Waar het fotokader staat ten opzichte van het citaatkader, bij 'naast'. */
+export type QuoteSide = 'links' | 'rechts' | 'boven' | 'onder'
+
 /** De verdeling op een vergelijkkaart. */
 export type CompareLayout =
   /** Twee beelden, één gezamenlijk tekstblok eronder. */
@@ -147,10 +163,24 @@ export interface Card {
   quoteAttribution: string
   /** Ondertitel, alleen bij de titelkaart. */
   subtitle: string
-  /** Citaat: tekst in een gekleurd kader, zodat de foto vol in kleur blijft.
-   *  Uit = de foto wordt gedimd om de tekst leesbaar te houden. */
-  quoteFrame: boolean
+  /** Hoe het citaat gepresenteerd wordt. Zie QuoteStyle. */
+  quoteStyle: QuoteStyle
+  /** De vulkleur van het citaatkader, bij 'kader' en 'naast'. */
   quoteFrameColor: string
+  /** Plek van het citaatkader bij 'kader', als fractie van het vrije vlak:
+   *  0 is tegen de linker- of bovenrand, 1 tegen de rechter- of onderrand,
+   *  0,5 is midden. Zo blijft het kader altijd binnen de kaart, ongeacht
+   *  schermformaat. */
+  quoteBoxX: number
+  quoteBoxY: number
+  /** Bij 'naast': aan welke kant van het citaat het fotokader staat. */
+  quoteSide: QuoteSide
+  /** Bij 'naast': de kleur van het vlak waarop beide kaders liggen. */
+  quoteBackdrop: string
+  /** Een dunne lijn om de kaders. */
+  quoteBorder: boolean
+  /** De kleur van die lijn; null = volg de tekstkleur, gedempt. */
+  quoteBorderColor: string | null
   textPlacement: TextPlacement
   /** Herkomst van dit moment. Journalistiek onmisbaar, ook als het niet getoond wordt. */
   source: string

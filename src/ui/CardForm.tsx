@@ -1,4 +1,13 @@
-import type { Card, CardType, CompareLayout, TextPlacement } from '../model/types'
+import { useCallback, useRef } from 'react'
+import type {
+  Card,
+  CardType,
+  CompareLayout,
+  Media,
+  QuoteSide,
+  QuoteStyle,
+  TextPlacement,
+} from '../model/types'
 import { buildDate, precisionLabel } from '../model/dates'
 import {
   cardTypeLabel,
@@ -9,7 +18,8 @@ import {
 } from '../model/doc'
 import { ImageField } from './ImageField'
 import { Field, NumberInput, Segmented, Select, TextArea, TextInput, Toggle } from './controls'
-import { KADER_KLEUREN } from '../model/palette'
+import { ACHTERGRONDEN, KADER_KLEUREN, type Swatch } from '../model/palette'
+import { mediaStyle } from '../player/media'
 import { RichText } from './RichText'
 
 interface Props {
@@ -30,6 +40,19 @@ const BADGES = [
   'Evenement',
   'Herdenking',
   'Geschiedenis',
+]
+
+const QUOTE_VORMEN: { value: QuoteStyle; label: string; title: string }[] = [
+  { value: 'over', label: 'Over de foto', title: 'De foto wordt gedimd, de tekst staat er los overheen' },
+  { value: 'kader', label: 'In een kader', title: 'De foto blijft vol in kleur; het citaatkader is te verschuiven' },
+  { value: 'naast', label: 'Naast elkaar', title: 'Citaat en foto elk in een eigen kader op een gekleurd vlak' },
+]
+
+const QUOTE_KANTEN: { value: QuoteSide; label: string; title: string }[] = [
+  { value: 'links', label: 'Links', title: 'De foto links van het citaat' },
+  { value: 'rechts', label: 'Rechts', title: 'De foto rechts van het citaat' },
+  { value: 'boven', label: 'Boven', title: 'De foto boven het citaat' },
+  { value: 'onder', label: 'Onder', title: 'De foto onder het citaat' },
 ]
 
 const INDELINGEN: { value: CompareLayout; label: string; title: string }[] = [
@@ -149,22 +172,11 @@ export function CardForm({ card, onChange }: Props) {
 
       {isTitel && (
         <Field
+          group
           label="Label bovenaan"
-          hint="Het blokje boven de titel. Kies een suggestie of typ je eigen woord."
+          hint="Het blokje boven de titel. Kies een suggestie of typ je eigen woord. Laat het leeg als je geen blokje wilt."
         >
-          <div className="badgerij">
-            <TextInput
-              value={card.badge}
-              placeholder="Dossier"
-              list="badge-suggesties"
-              onChange={(v) => onChange({ badge: v }, 'badge')}
-            />
-            <datalist id="badge-suggesties">
-              {BADGES.map((b) => (
-                <option key={b} value={b} />
-              ))}
-            </datalist>
-          </div>
+          <BadgeKiezer value={card.badge} onChange={(v) => onChange({ badge: v }, 'badge')} />
         </Field>
       )}
 
@@ -200,45 +212,84 @@ export function CardForm({ card, onChange }: Props) {
       )}
 
       {card.type === 'quote' && (
-        <Field label="Wie zegt dit?">
-          <TextInput
-            value={card.quoteAttribution}
-            placeholder="Daniel Tuitert, jurist uit Zwolle"
-            onChange={(v) => onChange({ quoteAttribution: v }, 'bron-citaat')}
-          />
-        </Field>
-      )}
+        <>
+          <Field
+            group
+            label="Vorm van het citaat"
+            hint="Over de foto: de foto wordt gedimd zodat de tekst leesbaar blijft. In een kader: de foto blijft vol in kleur en het citaat krijgt een eigen vlak dat je kunt verschuiven. Naast elkaar: citaat en foto elk in een eigen kader op een gekleurd vlak."
+          >
+            <Segmented
+              label="Vorm van het citaat"
+              value={card.quoteStyle}
+              onChange={(v) => onChange({ quoteStyle: v })}
+              options={QUOTE_VORMEN}
+            />
+          </Field>
 
-      {card.type === 'quote' && (
-        <Field
-          group
-          label="Foto en leesbaarheid"
-          hint="Kader uit: de foto wordt gedimd zodat de tekst leesbaar blijft. Kader aan: de foto blijft vol in kleur en het citaat krijgt een eigen vlak."
-        >
-          <Toggle
-            label="Citaat in een gekleurd kader"
-            checked={card.quoteFrame}
-            onChange={(v) => onChange({ quoteFrame: v })}
-          />
-          {card.quoteFrame && (
-            <div className="stalen">
-              {KADER_KLEUREN.map((k) => (
-                <button
-                  key={k.hex}
-                  type="button"
-                  className={`staal ${
-                    k.hex.toLowerCase() === card.quoteFrameColor.toLowerCase() ? 'is-on' : ''
-                  }`}
-                  style={{ background: k.hex }}
-                  onClick={() => onChange({ quoteFrameColor: k.hex })}
-                  title={`${k.naam} · ${k.hex}`}
-                  aria-label={k.naam}
-                  aria-pressed={k.hex.toLowerCase() === card.quoteFrameColor.toLowerCase()}
-                />
-              ))}
-            </div>
+          {card.quoteStyle === 'kader' && (
+            <Field
+              group
+              label="Plek van het kader"
+              hint="Sleep het kader naar een rustig deel van de foto. Met de pijltjestoetsen gaat het ook, en met Shift erbij in grotere stappen."
+            >
+              <KaderPlek
+                media={card.media}
+                x={card.quoteBoxX}
+                y={card.quoteBoxY}
+                onChange={(x, y) => onChange({ quoteBoxX: x, quoteBoxY: y }, 'kaderplek')}
+              />
+            </Field>
           )}
-        </Field>
+
+          {card.quoteStyle === 'naast' && (
+            <Field group label="Kant van de foto" hint="Op een telefoon komt de foto altijd boven of onder de tekst; naast elkaar past daar niet.">
+              <Segmented
+                label="Kant van de foto"
+                value={card.quoteSide}
+                onChange={(v) => onChange({ quoteSide: v })}
+                options={QUOTE_KANTEN}
+              />
+            </Field>
+          )}
+
+          {card.quoteStyle !== 'over' && (
+            <Field group label="Kleur van het citaatkader">
+              <Stalen
+                kleuren={KADER_KLEUREN}
+                waarde={card.quoteFrameColor}
+                onKies={(hex) => hex !== null && onChange({ quoteFrameColor: hex })}
+              />
+            </Field>
+          )}
+
+          {card.quoteStyle === 'naast' && (
+            <Field group label="Achtergrond van de kaart" hint="Het vlak waarop beide kaders liggen.">
+              <Stalen
+                kleuren={ACHTERGRONDEN}
+                waarde={card.quoteBackdrop}
+                onKies={(hex) => hex !== null && onChange({ quoteBackdrop: hex })}
+              />
+            </Field>
+          )}
+
+          {card.quoteStyle !== 'over' && (
+            <Field group label="Lijn om de kaders">
+              <Toggle
+                label="Een dunne lijn om de kaders"
+                checked={card.quoteBorder}
+                onChange={(v) => onChange({ quoteBorder: v })}
+              />
+              {card.quoteBorder && (
+                <Stalen
+                  kleuren={KADER_KLEUREN}
+                  waarde={card.quoteBorderColor}
+                  volgLabel="Volg de tekstkleur"
+                  onKies={(hex) => onChange({ quoteBorderColor: hex })}
+                />
+              )}
+            </Field>
+          )}
+        </>
       )}
 
       {card.type === 'image-text' && card.media && (
@@ -333,6 +384,197 @@ export function CardForm({ card, onChange }: Props) {
           onChange={(v) => onChange({ source: v }, 'bron')}
         />
       </Field>
+    </div>
+  )
+}
+
+/**
+ * Het label boven de titel: een uitklaplijst met suggesties naast een vrij
+ * tekstveld.
+ *
+ * Eerder stonden de suggesties in een `datalist` achter het tekstveld. Dat is
+ * onvindbaar — de lijst verschijnt pas als je begint te typen of het pijltje
+ * precies raakt — waardoor het label in de praktijk altijd op 'Dossier' bleef
+ * staan. Nu is de keuze meteen zichtbaar, en blijft het tekstveld ernaast
+ * staan zodat je er ook je eigen woord in kunt zetten.
+ *
+ * Leegmaken betekent: geen blokje. Staat er iets eigens in, dan toont de lijst
+ * dat als extra regel, zodat de lijst nooit iets anders beweert dan er staat.
+ */
+function BadgeKiezer({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const bekend = BADGES.includes(value)
+  return (
+    <div className="badgerij">
+      <select
+        className="inp inp-select"
+        aria-label="Suggestie voor het label"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">Geen label</option>
+        {!bekend && value !== '' && <option value={value}>Eigen tekst: {value}</option>}
+        {BADGES.map((b) => (
+          <option key={b} value={b}>
+            {b}
+          </option>
+        ))}
+      </select>
+      <TextInput
+        value={value}
+        placeholder="Geen label"
+        aria-label="Tekst van het label"
+        onChange={onChange}
+      />
+    </div>
+  )
+}
+
+/**
+ * Een rij kleurstalen. Met `volgLabel` krijgt de rij er een eerste knop bij
+ * die de kleur weer loslaat, zodat 'geen eigen keuze' een echte keuze blijft
+ * en niet iets dat je alleen bereikt door de kaart opnieuw te maken.
+ */
+function Stalen({
+  kleuren,
+  waarde,
+  onKies,
+  volgLabel,
+}: {
+  kleuren: Swatch[]
+  waarde: string | null
+  onKies: (hex: string | null) => void
+  volgLabel?: string
+}) {
+  const gelijk = (hex: string) => waarde !== null && hex.toLowerCase() === waarde.toLowerCase()
+  return (
+    <div className="stalen">
+      {volgLabel && (
+        <button
+          type="button"
+          className={`staal is-thema ${waarde === null ? 'is-on' : ''}`}
+          onClick={() => onKies(null)}
+          title={volgLabel}
+          aria-label={volgLabel}
+          aria-pressed={waarde === null}
+        />
+      )}
+      {kleuren.map((k) => (
+        <button
+          key={k.hex}
+          type="button"
+          className={`staal ${gelijk(k.hex) ? 'is-on' : ''}`}
+          style={{ background: k.hex }}
+          onClick={() => onKies(k.hex)}
+          title={`${k.naam} · ${k.hex}`}
+          aria-label={k.naam}
+          aria-pressed={gelijk(k.hex)}
+        />
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Sleepbare plek voor het citaatkader.
+ *
+ * Rekent net als de speler met de fractie van de vrije ruimte in plaats van
+ * met het middelpunt van het kader — zie `kaderPlek()` in CardView. Daardoor
+ * komt wat je hier neerzet op elk schermformaat op dezelfde plek uit, en kan
+ * het kader nooit half buiten de kaart vallen.
+ *
+ * Het vlak heeft een vaste verhouding van 16:9. Dat is een benadering van de
+ * kaart, niet de kaart zelf; de voorvertoning ernaast toont de echte maat.
+ */
+function KaderPlek({
+  media,
+  x,
+  y,
+  onChange,
+}: {
+  media: Media | null
+  x: number
+  y: number
+  onChange: (x: number, y: number) => void
+}) {
+  const vlakRef = useRef<HTMLDivElement>(null)
+  const vakRef = useRef<HTMLButtonElement>(null)
+  const sleept = useRef(false)
+
+  const klem = (n: number) => Number(Math.min(1, Math.max(0, n)).toFixed(4))
+
+  const fractie = useCallback((clientX: number, clientY: number) => {
+    const vlak = vlakRef.current
+    const vak = vakRef.current
+    if (!vlak || !vak) return null
+    const r = vlak.getBoundingClientRect()
+    const v = vak.getBoundingClientRect()
+    const vrijX = r.width - v.width
+    const vrijY = r.height - v.height
+    return {
+      x: vrijX > 0 ? klem((clientX - r.left - v.width / 2) / vrijX) : 0.5,
+      y: vrijY > 0 ? klem((clientY - r.top - v.height / 2) / vrijY) : 0.5,
+    }
+  }, [])
+
+  const opPointerDown = (e: React.PointerEvent) => {
+    // Alleen de linkerknop: met rechts hoort een menu te openen, niet iets te
+    // verschuiven.
+    if (e.button !== 0) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    sleept.current = true
+    const f = fractie(e.clientX, e.clientY)
+    if (f) onChange(f.x, f.y)
+  }
+
+  const opPointerMove = (e: React.PointerEvent) => {
+    if (!sleept.current || e.buttons === 0) return
+    const f = fractie(e.clientX, e.clientY)
+    if (f) onChange(f.x, f.y)
+  }
+
+  const opToets = (e: React.KeyboardEvent) => {
+    const stap = e.shiftKey ? 0.1 : 0.02
+    const richting: Record<string, [number, number]> = {
+      ArrowLeft: [-stap, 0],
+      ArrowRight: [stap, 0],
+      ArrowUp: [0, -stap],
+      ArrowDown: [0, stap],
+    }
+    const delta = richting[e.key]
+    if (!delta) return
+    e.preventDefault()
+    onChange(klem(x + delta[0]), klem(y + delta[1]))
+  }
+
+  return (
+    <div
+      className="kaderplek"
+      ref={vlakRef}
+      onPointerDown={opPointerDown}
+      onPointerMove={opPointerMove}
+      onPointerUp={() => {
+        sleept.current = false
+      }}
+    >
+      {media ? (
+        <img src={media.src} alt="" style={mediaStyle(media, 'cover')} />
+      ) : (
+        <span className="kaderplek-leeg">Nog geen foto</span>
+      )}
+      <button
+        type="button"
+        ref={vakRef}
+        className="kaderplek-vak"
+        style={{
+          left: `${x * 100}%`,
+          top: `${y * 100}%`,
+          transform: `translate(${x * -100}%, ${y * -100}%)`,
+        }}
+        onKeyDown={opToets}
+        aria-label="Plek van het citaatkader; versleep het of gebruik de pijltjestoetsen"
+      >
+        Citaat
+      </button>
     </div>
   )
 }
