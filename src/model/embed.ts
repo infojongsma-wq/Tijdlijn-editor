@@ -42,15 +42,18 @@ export async function exportEmbed(doc: TimelineDoc): Promise<void> {
  */
 async function metIngeslotenBeeld(doc: TimelineDoc): Promise<TimelineDoc> {
   // Dezelfde foto kan op meerdere kaarten staan; één keer ophalen is genoeg.
-  const opgehaald = new Map<string, string>()
+  // De belofte gaat de kaart in, niet de uitkomst: alle kaarten worden
+  // tegelijk ingesloten, en wie op de uitkomst wacht voordat hij hem bewaart,
+  // laat gelijktijdige missers dezelfde foto alsnog elk apart ophalen.
+  const opgehaald = new Map<string, Promise<string>>()
 
-  const insluiten = async (src: string): Promise<string> => {
-    if (src.startsWith('data:')) return src
+  const insluiten = (src: string): Promise<string> => {
+    if (src.startsWith('data:')) return Promise.resolve(src)
     const bekend = opgehaald.get(src)
     if (bekend) return bekend
-    const data = await naarDataUrl(src)
-    opgehaald.set(src, data)
-    return data
+    const belofte = naarDataUrl(src)
+    opgehaald.set(src, belofte)
+    return belofte
   }
 
   const beeld = async (media: Media | null): Promise<Media | null> => {

@@ -1109,3 +1109,14 @@
     transition: none;
   }
 }
+
+
+/* Een leeg beeldvak in de vergelijking: de melding gecentreerd in zijn vak. */
+.pc-comparebeeld.is-leeg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pc-comparebeeld.is-leeg .pc-empty {
+  margin: 0;
+}

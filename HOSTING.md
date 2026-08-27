@@ -30,18 +30,20 @@ de complete editor in één bestand.
 
 ## Wat er uit komt
 
-`dist/` is ongeveer 2,0 MB:
+`dist/` is ongeveer 3,2 MB:
 
 | Onderdeel | Omvang | Opmerking |
 | --- | --- | --- |
 | `index.html` | ~1 kB | geen verwijzingen naar buiten |
-| `assets/index-*.js` | ~233 kB | de editor |
-| `assets/index-*.css` | ~38 kB | |
+| `assets/index-*.js` | ~226 kB | de editor |
+| `assets/index-*.css` | ~39 kB | |
 | `assets/_virtual_kijkpagina-*.js` | ~505 kB | sjabloon voor de export, wordt pas opgehaald bij gebruik |
-| `assets/Roobert-*.woff2` | 5 × ~35 kB | huisstijlfont |
-| `assets/wolf-*.jpg` | ~1 MB | voorbeelddossier, mag weg — zie onder |
+| `assets/voorbeeld.tijdlijn-*.js` | ~2,3 MB | voorbeelddossier, wordt pas opgehaald bij gebruik — zie onder |
+| `assets/Roobert-*.woff2` | 6 × ~30-70 kB | huisstijlfont |
 
-Alle bestandsnamen in `assets/` bevatten een inhoudshash.
+Alle bestandsnamen in `assets/` bevatten een inhoudshash. De twee grote
+bestanden worden pas opgehaald als iemand de bijbehorende knop gebruikt; het
+openen van de editor kost alleen de eerste drie regels.
 
 ## Serveren
 
@@ -86,11 +88,11 @@ staan, maar op een ander adres. Zie onder.
 
 ## Het voorbeelddossier
 
-`src/assets/demo/` bevat zeven foto's met rechten van derden (Getty Images,
-iStock, Pixabay). Ze zitten erin als testmateriaal, achter de knop
-*Voorbeeld*. Voor een interne installatie is dat geen bezwaar; wil je ze eruit,
-verwijder dan de map en de verwijzingen in `src/model/demo.ts`. Dat scheelt
-ook ongeveer 1 MB.
+Achter de knop *Voorbeeld* zit één bestand: `src/assets/voorbeeld.tijdlijn.json`
+(±2,3 MB, eigen beeld van de redactie — geen rechten van derden). Vervangen is
+dat bestand overschrijven met een tijdlijn uit de editor en opnieuw bouwen; zie
+"Het voorbeeld vervangen" in de README. Helemaal weglaten kan ook: een klein of
+leeg tijdlijnbestand op die plek scheelt ~2,3 MB in `dist/`.
 
 ## Gepubliceerde tijdlijnen
 

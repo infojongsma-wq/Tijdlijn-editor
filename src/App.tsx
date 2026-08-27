@@ -257,8 +257,11 @@ export function App() {
   const bevestigNaam = useCallback(() => {
     const naam = naamInvoer.trim()
     if (!naam) return
-    const bijgewerkt = { ...doc, name: naam }
-    history.set(() => bijgewerkt, 'naam')
+    // Alleen een stap in de geschiedenis als er echt iets verandert; een
+    // lege stap wist de opnieuw-stapel en dat merk je pas als Ctrl+Shift+Z
+    // niets meer doet.
+    const bijgewerkt = naam === doc.name ? doc : { ...doc, name: naam }
+    if (bijgewerkt !== doc) history.set(() => bijgewerkt, 'naam')
     const waarvoor = vraagNaam
     setVraagNaam(null)
     if (waarvoor === 'embed') void exporteer(bijgewerkt)
@@ -267,6 +270,9 @@ export function App() {
 
   const codeRef = useRef<HTMLTextAreaElement>(null)
   const [gekopieerd, setGekopieerd] = useState(false)
+  /** Terugvalmelding bij het kopiëren; in de dialoog zelf, want de banner
+   *  bovenaan ligt achter de dialoogwaas en is dan onleesbaar én onklikbaar. */
+  const [kopieerHint, setKopieerHint] = useState<string | null>(null)
 
   /**
    * De code naar het klembord.
@@ -285,7 +291,7 @@ export function App() {
       setTimeout(() => setGekopieerd(false), 2000)
     } catch {
       codeRef.current?.select()
-      setMelding('Kopiëren kan hier niet automatisch. De code is geselecteerd — druk op Ctrl+C.')
+      setKopieerHint('Kopiëren kan hier niet automatisch. De code is geselecteerd — druk op Ctrl+C.')
     }
   }, [])
 
@@ -298,7 +304,15 @@ export function App() {
   const opslaanKnopRef = useRef<HTMLButtonElement>(null)
 
   useDialoog(bekijk, volledigRef, () => setBekijk(false), bekijkKnopRef)
-  useDialoog(embed !== null, embedRef, () => setEmbed(null), embedKnopRef)
+  useDialoog(
+    embed !== null,
+    embedRef,
+    () => {
+      setEmbed(null)
+      setKopieerHint(null)
+    },
+    embedKnopRef,
+  )
   useDialoog(vraagNaam !== null, naamRef, () => setVraagNaam(null), opslaanKnopRef)
 
   // Sneltoetsen. Niet onderscheppen terwijl iemand in een tekstveld typt —
@@ -323,13 +337,16 @@ export function App() {
       }
       if (e.key.toLowerCase() === 's') {
         e.preventDefault()
+        // Staat de naamvraag al open, dan zou opnieuw vragen het veld
+        // terugzetten op de oude naam — en is wat je net typte weg.
+        if (vraagNaam !== null) return
         if (e.shiftKey) vraag('opslaan')
         else bewaarOfVraag('opslaan')
       }
     }
     window.addEventListener('keydown', opToets)
     return () => window.removeEventListener('keydown', opToets)
-  }, [history, doc, vraag, bewaarOfVraag])
+  }, [history, doc, vraag, bewaarOfVraag, vraagNaam])
 
   return (
     <div className="shell">
@@ -515,9 +532,17 @@ export function App() {
               ref={codeRef}
               aria-label="Code om te plakken"
             />
+            {kopieerHint && <p className="embed-hint-fout">{kopieerHint}</p>}
             <div className="embed-knoppen">
               <Button onClick={() => void kopieer()}>{gekopieerd ? 'Gekopieerd' : 'Kopieer de code'}</Button>
-              <Button onClick={() => setEmbed(null)} variant="primary" title="Sluiten (Esc)">
+              <Button
+                onClick={() => {
+                  setEmbed(null)
+                  setKopieerHint(null)
+                }}
+                variant="primary"
+                title="Sluiten (Esc)"
+              >
                 Klaar
               </Button>
             </div>
@@ -621,7 +646,11 @@ function useDialoog(
 ) {
   useEffect(() => {
     if (!open) return
-    dialoogRef.current?.focus()
+    // Alleen focussen als de dialoog nog niets vasthoudt. Een veld met
+    // autoFocus is dan al aan de beurt geweest — dat overschrijven betekent
+    // dat je typt tegen een omhulling die niets met je toetsen doet.
+    const dialoog = dialoogRef.current
+    if (dialoog && !dialoog.contains(document.activeElement)) dialoog.focus()
     const opToets = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         sluit()
@@ -631,7 +660,7 @@ function useDialoog(
       const dialoog = dialoogRef.current
       if (!dialoog) return
       const focusbaar = dialoog.querySelectorAll<HTMLElement>(
-        'button, [href], textarea, [tabindex]:not([tabindex="-1"])',
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       )
       if (focusbaar.length === 0) return
       const eerste = focusbaar[0]

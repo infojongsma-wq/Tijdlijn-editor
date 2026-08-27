@@ -374,14 +374,6 @@ function GraphicCard({ card, theme, datum }: { card: Card; theme: Theme; datum: 
 }
 
 /**
- * De vergelijkkaart: voor en na, hier en daar, toen en nu.
- *
- * Drie indelingen uit dezelfde bouwstenen — twee beelden met één tekst, twee
- * beelden met elk een tekst, of één beeld met twee teksten ernaast. Op een
- * smal scherm komen de kolommen onder elkaar te staan; naast elkaar vergelijken
- * lukt op een telefoon toch niet.
- */
-/**
  * De vergelijkkaart: twee dingen naast elkaar zetten.
  *
  * Alles staat in één raster in plaats van in twee losse kolommen. Dat is het
@@ -393,6 +385,18 @@ function GraphicCard({ card, theme, datum }: { card: Card; theme: Theme; datum: 
  */
 function CompareCard({ card, theme, datum }: { card: Card; theme: Theme; datum: string }) {
   const indeling = card.compareLayout
+
+  // Met een eigen achtergrond gelden de tijdlijnkleuren hier niet meer: de
+  // datumstip in Oost Blauw verdwijnt op een Oost Blauw vlak. Zelfde regel
+  // als bij het citaat in een kader.
+  const vlakThema: Theme = card.compareBackdrop
+    ? {
+        ...theme,
+        background: card.compareBackdrop,
+        text: tekstVoor(card.compareBackdrop),
+        accent: accentOp(theme.accent, card.compareBackdrop),
+      }
+    : theme
 
   // Een leeg tekstblok houdt zijn vak in het raster. Body geeft bij lege tekst
   // niets terug; zonder deze omhulling zou het tweede tekstblok dan in het vak
@@ -418,20 +422,20 @@ function CompareCard({ card, theme, datum }: { card: Card; theme: Theme; datum: 
       }
     >
       <Inner>
-        <Meta datum={datum} theme={theme} />
+        <Meta datum={datum} theme={vlakThema} />
         <Kop card={card} niveau={3} />
 
         <div className="pc-comparegrid">
           {indeling === 'een-beeld-twee-tekst' ? (
             <>
-              <MediaVak media={card.media} theme={theme} tint={card.compareTintA} />
+              <MediaVak media={card.media} theme={vlakThema} tint={card.compareTintA} />
               {tekstvak(card.body, card.compareTintA)}
               {tekstvak(card.body2, card.compareTintB)}
             </>
           ) : (
             <>
-              <MediaVak media={card.media} theme={theme} tint={card.compareTintA} />
-              <MediaVak media={card.media2} theme={theme} tint={card.compareTintB} />
+              <MediaVak media={card.media} theme={vlakThema} tint={card.compareTintA} />
+              <MediaVak media={card.media2} theme={vlakThema} tint={card.compareTintB} />
               {indeling === 'twee-beeld-twee-tekst' && (
                 <>
                   {tekstvak(card.body, card.compareTintA)}
@@ -461,16 +465,22 @@ function MediaVak({
   /** Een gekleurd vlak om de foto heen; null = geen vlak. */
   tint?: string | null
 }) {
-  if (!media) return <Empty theme={theme} />
+  // Ook zonder foto blijft het vak in het raster staan. De lege melding los
+  // neerzetten liet de rijverdeling kantelen: het tweede tekstblok belandde
+  // dan onder de melding in plaats van onder het eerste.
   return (
     <div
-      className={`pc-comparebeeld ${tint ? 'heeft-vlak' : ''}`}
+      className={`pc-comparebeeld ${tint ? 'heeft-vlak' : ''} ${media ? '' : 'is-leeg'}`}
       style={tint ? { background: tint } : undefined}
     >
-      <div className="pc-mediabox">
-        <img src={media.src} alt={media.alt} style={mediaStyle(media, 'cover')} />
-        <Aanwijzers media={media} theme={theme} fit="cover" />
-      </div>
+      {media ? (
+        <div className="pc-mediabox">
+          <img src={media.src} alt={media.alt} style={mediaStyle(media, 'cover')} />
+          <Aanwijzers media={media} theme={theme} fit="cover" />
+        </div>
+      ) : (
+        <Empty theme={theme} />
+      )}
     </div>
   )
 }
