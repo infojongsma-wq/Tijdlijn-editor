@@ -305,6 +305,12 @@ function normaliseAnnotations(raw: unknown): Annotation[] {
         // Alleen ingebedde afbeeldingen; een pad of webadres uit een bewerkt
         // bestand hoort hier niet doorheen te komen.
         icon: typeof a.icon === 'string' && a.icon.startsWith('data:image/') ? a.icon : null,
+        // Buiten bereik of onleesbaar: terug naar de standaardmaat. Een 0 of
+        // een NaN zou de markering onvindbaar klein maken.
+        size:
+          typeof a.size === 'number' && Number.isFinite(a.size)
+            ? Math.min(3, Math.max(0.4, a.size))
+            : 1,
       },
     ]
   })

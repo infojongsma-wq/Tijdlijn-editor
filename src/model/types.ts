@@ -128,6 +128,10 @@ export interface Annotation {
   line: boolean
   /** Eigen picto (data-URL) in plaats van de standaardstip. */
   icon: string | null
+  /** Hoe groot de stip of de picto wordt: 1 is de standaardmaat, 0,5 half,
+   *  3 drie keer zo groot. Een factor en geen aantal pixels, zodat de
+   *  markering meeschaalt met het scherm, net als al het andere. */
+  size: number
   /** Eigen kleuren; null betekent: volg het thema van de tijdlijn. */
   dotColor: string | null
   textColor: string | null

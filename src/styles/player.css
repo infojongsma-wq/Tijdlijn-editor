@@ -758,13 +758,17 @@
   height: 100%;
 }
 
+/* De maat van de markering. `--an-schaal` komt per aanwijzer uit het document;
+   1 is de standaardmaat. Alles schaalt mee — de bol, zijn kern en zijn rand —
+   want een driemaal zo grote bol met een haarlijntje eromheen ziet er kapot
+   uit. */
 .an-punt {
   position: absolute;
-  width: 22px;
-  height: 22px;
-  margin: -11px 0 0 -11px;
+  width: calc(22px * var(--an-schaal, 1));
+  height: calc(22px * var(--an-schaal, 1));
+  margin: calc(-11px * var(--an-schaal, 1)) 0 0 calc(-11px * var(--an-schaal, 1));
   border-radius: 50%;
-  border: 2px solid;
+  border: calc(2px * var(--an-schaal, 1)) solid;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -773,8 +777,8 @@
   pointer-events: auto;
 }
 .an-kern {
-  width: 8px;
-  height: 8px;
+  width: calc(8px * var(--an-schaal, 1));
+  height: calc(8px * var(--an-schaal, 1));
   border-radius: 50%;
 }
 
@@ -946,9 +950,9 @@
 /* Eigen picto in plaats van de standaardstip. */
 .an-icoon {
   position: absolute;
-  width: 38px;
-  height: 38px;
-  margin: -19px 0 0 -19px;
+  width: calc(38px * var(--an-schaal, 1));
+  height: calc(38px * var(--an-schaal, 1));
+  margin: calc(-19px * var(--an-schaal, 1)) 0 0 calc(-19px * var(--an-schaal, 1));
   object-fit: contain;
   pointer-events: auto;
   filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.35));

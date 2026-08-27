@@ -624,7 +624,13 @@ function Aanwijzers({
           // punt is er niets om op te richten en blijft het blok gewoon staan.
           const verborgen = a.reveal === 'hover' && a.line
           return (
-            <div key={a.id} className={`an ${verborgen ? 'is-hover' : ''}`}>
+            <div
+              key={a.id}
+              className={`an ${verborgen ? 'is-hover' : ''}`}
+              // De maat gaat als factor mee naar de opmaak, zodat stip, kern,
+              // rand en picto in één keer meeschalen.
+              style={{ ['--an-schaal' as string]: a.size }}
+            >
               {a.line && a.text && (
                 <svg className="an-svg" aria-hidden="true">
                   <line

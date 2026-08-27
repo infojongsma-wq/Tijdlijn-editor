@@ -1162,11 +1162,16 @@
   stroke: var(--oost-blauw);
   stroke-width: 2;
 }
+/* De handvatten in de kiezer schalen mee met de maat van de aanwijzer, maar
+   gedempt: dit zijn dingen om beet te pakken, niet de weergave zelf. Op ware
+   grootte zou een driemaal vergrote stip het kleine fotootje vullen en niet
+   meer te verslepen zijn. De echte maat zie je in de voorvertoning ernaast. */
 .focal-an {
+  --fp-schaal: clamp(0.7, var(--an-schaal, 1), 1.8);
   position: absolute;
-  width: 16px;
-  height: 16px;
-  margin: -8px 0 0 -8px;
+  width: calc(16px * var(--fp-schaal));
+  height: calc(16px * var(--fp-schaal));
+  margin: calc(-8px * var(--fp-schaal)) 0 0 calc(-8px * var(--fp-schaal));
   border-radius: 50%;
   background: var(--oost-blauw);
   border: 2px solid var(--oost-wit);
@@ -1259,9 +1264,9 @@
 
 /* Een picto als versleepbaar anker in het voorbeeldkader. */
 .focal-an.is-icon {
-  width: 30px;
-  height: 30px;
-  margin: -15px 0 0 -15px;
+  width: calc(30px * var(--fp-schaal));
+  height: calc(30px * var(--fp-schaal));
+  margin: calc(-15px * var(--fp-schaal)) 0 0 calc(-15px * var(--fp-schaal));
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.85);
   border: 1.5px solid var(--oost-wit);
@@ -1396,4 +1401,66 @@
 }
 .kaderplek-vak:active {
   cursor: grabbing;
+}
+
+/* ---------- de tijdlijn op de site zetten ---------- */
+
+.embed-waas {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(19, 23, 32, 0.55);
+}
+.embed-doos {
+  width: min(620px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  background: var(--ui-panel);
+  border-radius: var(--radius-card);
+  padding: 26px 28px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.3);
+}
+.embed-kop {
+  margin: 0 0 8px;
+  font-size: 19px;
+  font-weight: 600;
+}
+.embed-uitleg {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--ui-ink-soft);
+}
+.embed-stappen {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.embed-stappen code {
+  font-size: 13px;
+  background: var(--ui-sunken);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+.embed-code {
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--radius-input);
+  background: var(--ui-sunken);
+  color: var(--ui-ink);
+  padding: 12px 14px;
+  resize: vertical;
+}
+.embed-knoppen {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
 }
