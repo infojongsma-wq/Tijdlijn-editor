@@ -62,7 +62,11 @@ export function emptyCard(type: CardType = 'image-text'): Card {
   }
 }
 
-export function emptyDoc(name = 'Naamloze tijdlijn'): TimelineDoc {
+/** Een verse tijdlijn heeft bewust géén naam. Stond er 'Naamloze tijdlijn' in
+ *  het veld, dan zag het eruit als een kop en niet als iets om in te vullen —
+ *  en werd er onder die naam opgeslagen. Leeg toont een wenk, en het opslaan
+ *  vraagt erom. */
+export function emptyDoc(name = ''): TimelineDoc {
   return {
     version: DOC_VERSION,
     name,

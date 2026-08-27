@@ -53,9 +53,14 @@ uitkomst.zichtbaarInRust = await page.locator('.vp-slide.is-visible').count()
 console.log(JSON.stringify(uitkomst, null, 2))
 console.log('fouten:', fouten.length ? fouten : 'geen')
 
+// Geen vaste aantallen: het voorbeelddossier is te vervangen (zie "Het
+// voorbeeld vervangen" in de README), en een rooktest die daarop struikelt
+// test de verkeerde dingen. Wat hier telt is dat er kaarten zijn, dat de as
+// er één minder heeft dan het aantal kaarten — de titelkaart is geen moment
+// in de tijd — en dat de rest van de keten werkt.
 const goed =
-  uitkomst.kaarten === 8 &&
-  uitkomst.asStops === 7 &&
+  uitkomst.kaarten >= 2 &&
+  uitkomst.asStops === uitkomst.kaarten - 1 &&
   uitkomst.roobertGeladen &&
   uitkomst.rustNaSnap === true &&
   uitkomst.zichtbaarInRust === 1 &&

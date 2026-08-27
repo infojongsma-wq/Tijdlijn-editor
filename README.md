@@ -56,8 +56,11 @@ publiceren.
   Ctrl+Shift+Z).
 - **Bekijken** — de tijdlijn schermvullend, zoals het publiek hem straks ziet.
   Escape sluit hem weer.
-- **Opslaan en openen** — als bestand op je eigen computer (Ctrl+S). Tussentijds
-  bewaart de editor automatisch, zodat een dichtgeklapte laptop niets kost.
+- **Opslaan en openen** — als bestand op je eigen computer (Ctrl+S), of onder
+  een andere naam met *Opslaan als…* (Ctrl+Shift+S). De naam boven in de balk
+  bepaalt hoe het bestand gaat heten; sla je op zonder naam, dan wordt er eerst
+  om gevraagd. Tussentijds bewaart de editor automatisch, zodat een
+  dichtgeklapte laptop niets kost.
 - **Exporteren voor de site** — de knop *Embed* maakt van je tijdlijn één
   HTML-bestand met alles erin: de speler, je foto's en de fonts. Dat bestand
   zet je op de webserver en haal je met een iframe in een artikel. Geen server,
@@ -205,15 +208,12 @@ geplakt (`…niet waarschijnlijk.© Oost / Ingestuurd`). Hier niet.
 
 ## Het voorbeelddossier
 
-Onder de knop *Voorbeeld* zit het wolvendossier: zeven artikelen van RTV Oost
-tussen 13 maart en 2 juni 2025. Dat is **testmateriaal**, geen inhoud die bij de
-app hoort. Het staat erin om de editor te vullen met koppen van echte lengte,
-datums die samenvallen en foto's met echte rechtenvermeldingen. Wie een eigen
-tijdlijn begint, gooit het weg met *Nieuw*.
-
-De foto's zijn van derden (Getty Images, iStock, Pixabay). Voor intern gebruik
-is dat geen bezwaar, maar het is een reden om het voorbeeld te vervangen door
-eigen werk.
+Onder de knop *Voorbeeld* zit **Droogte in Overijssel**: acht momenten tussen 31
+juli en 19 augustus, met eigen beeld van de redactie. Het staat erin om de
+editor te vullen met koppen van echte lengte, twee momenten op dezelfde dag, en
+kaarten die de nieuwere vormen laten zien — een citaat naast de foto, en een
+vergelijking met een gekleurd vlak per helft. Wie een eigen tijdlijn begint,
+gooit het weg met *Nieuw*.
 
 ### Het voorbeeld vervangen
 

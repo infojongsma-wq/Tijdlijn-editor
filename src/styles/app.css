@@ -1464,3 +1464,22 @@
   gap: 8px;
   margin-top: 16px;
 }
+
+/* De naamvraag is smaller dan de embed-uitleg: één veld en twee knoppen. */
+.embed-doos.is-smal {
+  width: min(460px, 100%);
+}
+.embed-doos .inp {
+  width: 100%;
+}
+.embed-bestandsnaam {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--ui-ink-soft);
+}
+.embed-bestandsnaam code {
+  font-size: 12.5px;
+  background: var(--ui-sunken);
+  border-radius: 5px;
+  padding: 2px 6px;
+}

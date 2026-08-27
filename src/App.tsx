@@ -2,7 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Card, Settings, Theme, TimelineDoc } from './model/types'
 import { emptyCard, emptyDoc, orderedCards } from './model/doc'
 import { useHistory, MAX_STEPS } from './model/history'
-import { autosave, clearAutosave, loadAutosave, openFromFile, saveToFile } from './model/storage'
+import {
+  autosave,
+  clearAutosave,
+  loadAutosave,
+  openFromFile,
+  safeFileName,
+  saveToFile,
+} from './model/storage'
 import { demoDoc } from './model/demo'
 import { embedCode, exportEmbed } from './model/embed'
 import { CardList } from './ui/CardList'
@@ -41,6 +48,11 @@ export function App() {
   const [bekijk, setBekijk] = useState(false)
   /** De iframe-code na een geslaagde export; null = dialoog dicht. */
   const [embed, setEmbed] = useState<string | null>(null)
+  /** Vraagt om een naam. Onthoudt wat er daarna moet gebeuren, zodat 'Opslaan'
+   *  op een naamloze tijdlijn niet doodloopt maar eerst de naam vraagt en dan
+   *  alsnog opslaat. */
+  const [vraagNaam, setVraagNaam] = useState<'opslaan' | 'embed' | null>(null)
+  const [naamInvoer, setNaamInvoer] = useState('')
   const [melding, setMelding] = useState<string | null>(null)
   const bestandRef = useRef<HTMLInputElement>(null)
   // Eén melding over mislukt bewaren is genoeg; hem elke wijziging herhalen
@@ -199,14 +211,59 @@ export function App() {
    * De iframe-code erbij, want zonder die regel heeft het bestand geen nut en
    * gaat de redacteur hem toch ergens opzoeken.
    */
-  const exporteer = useCallback(async () => {
-    try {
-      await exportEmbed(doc)
-      setEmbed(embedCode(doc))
-    } catch (e) {
-      setMelding(e instanceof Error ? e.message : 'Het exporteren is niet gelukt.')
-    }
-  }, [doc])
+  const exporteer = useCallback(
+    async (welk: TimelineDoc = doc) => {
+      try {
+        await exportEmbed(welk)
+        setEmbed(embedCode(welk))
+      } catch (e) {
+        setMelding(e instanceof Error ? e.message : 'Het exporteren is niet gelukt.')
+      }
+    },
+    [doc],
+  )
+
+  /** Opent de naamvraag; met een naam die er al is als beginwaarde. */
+  const vraag = useCallback(
+    (waarvoor: 'opslaan' | 'embed') => {
+      setNaamInvoer(doc.name)
+      setVraagNaam(waarvoor)
+    },
+    [doc.name],
+  )
+
+  /**
+   * Opslaan of exporteren, maar nooit zonder naam.
+   *
+   * De naam staat in de balk bovenaan en bepaalt hoe het bestand gaat heten.
+   * Wie hem overslaat kreeg een bestand dat 'tijdlijn' heette, en na drie
+   * dossiers weet niemand meer welke welke is.
+   */
+  const bewaarOfVraag = useCallback(
+    (waarvoor: 'opslaan' | 'embed') => {
+      if (!doc.name.trim()) {
+        vraag(waarvoor)
+        return
+      }
+      if (waarvoor === 'embed') void exporteer()
+      else void saveToFile(doc)
+    },
+    [doc, vraag, exporteer],
+  )
+
+  /** De naam vastleggen en doen waar het om begonnen was. Het bijgewerkte
+   *  document gaat expliciet mee: de opgeslagen versie in `doc` loopt hier nog
+   *  een tekening achter. */
+  const bevestigNaam = useCallback(() => {
+    const naam = naamInvoer.trim()
+    if (!naam) return
+    const bijgewerkt = { ...doc, name: naam }
+    history.set(() => bijgewerkt, 'naam')
+    const waarvoor = vraagNaam
+    setVraagNaam(null)
+    if (waarvoor === 'embed') void exporteer(bijgewerkt)
+    else if (waarvoor === 'opslaan') void saveToFile(bijgewerkt)
+  }, [naamInvoer, doc, history, vraagNaam, exporteer])
 
   const codeRef = useRef<HTMLTextAreaElement>(null)
   const [gekopieerd, setGekopieerd] = useState(false)
@@ -236,9 +293,13 @@ export function App() {
   const bekijkKnopRef = useRef<HTMLButtonElement>(null)
   const embedRef = useRef<HTMLDivElement>(null)
   const embedKnopRef = useRef<HTMLButtonElement>(null)
+  const naamRef = useRef<HTMLDivElement>(null)
+  const naamVeldRef = useRef<HTMLInputElement>(null)
+  const opslaanKnopRef = useRef<HTMLButtonElement>(null)
 
   useDialoog(bekijk, volledigRef, () => setBekijk(false), bekijkKnopRef)
   useDialoog(embed !== null, embedRef, () => setEmbed(null), embedKnopRef)
+  useDialoog(vraagNaam !== null, naamRef, () => setVraagNaam(null), opslaanKnopRef)
 
   // Sneltoetsen. Niet onderscheppen terwijl iemand in een tekstveld typt —
   // daar heeft de browser zijn eigen ongedaan-maken.
@@ -262,12 +323,13 @@ export function App() {
       }
       if (e.key.toLowerCase() === 's') {
         e.preventDefault()
-        void saveToFile(doc)
+        if (e.shiftKey) vraag('opslaan')
+        else bewaarOfVraag('opslaan')
       }
     }
     window.addEventListener('keydown', opToets)
     return () => window.removeEventListener('keydown', opToets)
-  }, [history, doc])
+  }, [history, doc, vraag, bewaarOfVraag])
 
   return (
     <div className="shell">
@@ -278,7 +340,9 @@ export function App() {
         <input
           className="docname"
           value={doc.name}
+          placeholder="Naam van de tijdlijn…"
           aria-label="Naam van de tijdlijn"
+          title="Deze naam komt op het bestand te staan"
           onChange={(e) =>
             history.set((huidig) => ({ ...huidig, name: e.target.value }), 'naam')
           }
@@ -312,14 +376,23 @@ export function App() {
             type="button"
             className="btn"
             ref={embedKnopRef}
-            onClick={() => void exporteer()}
+            onClick={() => bewaarOfVraag('embed')}
             title="Maakt één HTML-bestand dat je met een iframe op de site zet"
           >
             Embed
           </button>
-          <Button onClick={() => void saveToFile(doc)} variant="primary" title="Ctrl+S">
-            Opslaan
+          <Button onClick={() => vraag('opslaan')} title="Opslaan onder een andere naam — Ctrl+Shift+S">
+            Opslaan als…
           </Button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            ref={opslaanKnopRef}
+            onClick={() => bewaarOfVraag('opslaan')}
+            title="Ctrl+S"
+          >
+            Opslaan
+          </button>
           <input
             ref={bestandRef}
             type="file"
@@ -359,6 +432,57 @@ export function App() {
             {/* Zonder focusCardId: hier begin je bij het begin van het verhaal,
                 niet bij de kaart die je toevallig aan het bewerken was. */}
             <Player doc={doc} />
+          </div>
+        </div>
+      )}
+
+      {vraagNaam !== null && (
+        <div
+          className="embed-waas"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Naam van de tijdlijn"
+          ref={naamRef}
+          tabIndex={-1}
+        >
+          <div className="embed-doos is-smal">
+            <h2 className="embed-kop">
+              {vraagNaam === 'embed' ? 'Onder welke naam publiceren?' : 'Opslaan als…'}
+            </h2>
+            <p className="embed-uitleg">
+              De naam komt boven in de balk te staan en bepaalt hoe het bestand gaat
+              heten. Kies iets waaraan je het dossier over een half jaar herkent.
+            </p>
+            <input
+              className="inp"
+              ref={naamVeldRef}
+              value={naamInvoer}
+              placeholder="Bijvoorbeeld: Droogte in Overijssel"
+              aria-label="Naam van de tijdlijn"
+              autoFocus
+              onChange={(e) => setNaamInvoer(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  bevestigNaam()
+                }
+              }}
+            />
+            <p className="embed-bestandsnaam">
+              Wordt opgeslagen als{' '}
+              <code>
+                {safeFileName(naamInvoer)}
+                {vraagNaam === 'embed' ? '.html' : '.tijdlijn.json'}
+              </code>
+            </p>
+            <div className="embed-knoppen">
+              <Button onClick={() => setVraagNaam(null)} title="Sluiten (Esc)">
+                Annuleren
+              </Button>
+              <Button onClick={bevestigNaam} variant="primary" disabled={!naamInvoer.trim()}>
+                {vraagNaam === 'embed' ? 'Naam bewaren en exporteren' : 'Opslaan'}
+              </Button>
+            </div>
           </div>
         </div>
       )}
