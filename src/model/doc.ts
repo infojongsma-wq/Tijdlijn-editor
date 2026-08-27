@@ -12,6 +12,7 @@ import {
 } from './types'
 import { buildDate, sortKey } from './dates'
 import { THEMA_DONKER, tekstVoor } from './palette'
+import { contrastRatio } from './contrast'
 import { isHtml, sanitizeRich, tekstNaarHtml } from './richtext'
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -176,7 +177,15 @@ export function kaartThema(card: Card, thema: Theme): Theme {
         ? card.compareBackdrop
         : null
   if (!eigen) return thema
-  return { ...thema, background: eigen, text: tekstVoor(eigen) }
+  return {
+    ...thema,
+    background: eigen,
+    text: tekstVoor(eigen),
+    // Het accent kleurt de voortgangsbalk en de actieve stip op de as. Valt
+    // het weg tegen de eigen achtergrond — onder 3:1, de WCAG-ondergrens voor
+    // grafische elementen — dan neemt het de tekstkleur van dat vlak over.
+    accent: contrastRatio(thema.accent, eigen) >= 3 ? thema.accent : tekstVoor(eigen),
+  }
 }
 
 function normaliseCard(raw: unknown): Card {

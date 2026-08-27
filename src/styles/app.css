@@ -1483,3 +1483,13 @@
   border-radius: 5px;
   padding: 2px 6px;
 }
+
+/* Terugvalmelding bij het kopiëren, binnen de dialoog. */
+.embed-hint-fout {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--ui-ink);
+  background: var(--ui-sunken);
+  border-radius: var(--radius-input);
+  padding: 9px 12px;
+}

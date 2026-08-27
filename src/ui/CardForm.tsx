@@ -246,6 +246,14 @@ export function CardForm({ card, onChange }: Props) {
 
       {card.type === 'quote' && (
         <>
+          <Field label="Wie zegt dit?" hint="Naam en functie, onder het citaat.">
+            <TextInput
+              value={card.quoteAttribution}
+              placeholder="Daniel Tuitert, jurist en wolvenvrijwilliger"
+              onChange={(v) => onChange({ quoteAttribution: v }, 'bron-citaat')}
+            />
+          </Field>
+
           <Field
             group
             label="Vorm van het citaat"
@@ -368,22 +376,11 @@ export function CardForm({ card, onChange }: Props) {
             ]}
           />
           {card.graphicFit === 'kader' && (
-            <div className="stalen">
-              {KADER_KLEUREN.map((k) => (
-                <button
-                  key={k.hex}
-                  type="button"
-                  className={`staal ${
-                    k.hex.toLowerCase() === card.graphicFrameColor.toLowerCase() ? 'is-on' : ''
-                  }`}
-                  style={{ background: k.hex }}
-                  onClick={() => onChange({ graphicFrameColor: k.hex })}
-                  title={`${k.naam} · ${k.hex}`}
-                  aria-label={k.naam}
-                  aria-pressed={k.hex.toLowerCase() === card.graphicFrameColor.toLowerCase()}
-                />
-              ))}
-            </div>
+            <Stalen
+              kleuren={KADER_KLEUREN}
+              waarde={card.graphicFrameColor}
+              onKies={(hex) => hex !== null && onChange({ graphicFrameColor: hex })}
+            />
           )}
         </Field>
       )}
