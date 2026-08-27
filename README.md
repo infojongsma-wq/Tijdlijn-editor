@@ -56,8 +56,11 @@ publiceren.
   Ctrl+Shift+Z).
 - **Bekijken** — de tijdlijn schermvullend, zoals het publiek hem straks ziet.
   Escape sluit hem weer.
-- **Opslaan en openen** — als bestand op je eigen computer (Ctrl+S). Tussentijds
-  bewaart de editor automatisch, zodat een dichtgeklapte laptop niets kost.
+- **Opslaan en openen** — als bestand op je eigen computer (Ctrl+S), of onder
+  een andere naam met *Opslaan als…* (Ctrl+Shift+S). De naam boven in de balk
+  bepaalt hoe het bestand gaat heten; sla je op zonder naam, dan wordt er eerst
+  om gevraagd. Tussentijds bewaart de editor automatisch, zodat een
+  dichtgeklapte laptop niets kost.
 - **Exporteren voor de site** — de knop *Embed* maakt van je tijdlijn één
   HTML-bestand met alles erin: de speler, je foto's en de fonts. Dat bestand
   zet je op de webserver en haal je met een iframe in een artikel. Geen server,
