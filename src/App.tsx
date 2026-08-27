@@ -14,6 +14,19 @@ import { Player } from './player/Player'
 import { Button } from './ui/controls'
 import './styles/app.css'
 
+/** Invoervelden zonder eigen ongedaan-maken; daar mag Ctrl+Z van ons zijn. */
+const GEEN_TEKSTVELD = new Set([
+  'range',
+  'checkbox',
+  'radio',
+  'button',
+  'submit',
+  'reset',
+  'color',
+  'file',
+  'image',
+])
+
 type Tab = 'inhoud' | 'kaart' | 'tijdlijn'
 
 export function App() {
@@ -234,9 +247,15 @@ export function App() {
       const mod = e.metaKey || e.ctrlKey
       if (!mod) return
       const doel = e.target as HTMLElement | null
-      const inVeld =
-        doel?.tagName === 'INPUT' || doel?.tagName === 'TEXTAREA' || doel?.isContentEditable
-      if (e.key.toLowerCase() === 'z' && !inVeld) {
+      // Alleen in een véld waar je tekst typt houdt de browser zijn eigen
+      // ongedaan-maken bij; daar moeten we van afblijven. Een schuifregelaar of
+      // een selectievakje is ook een <input>, maar heeft dat niet — daar deed
+      // Ctrl+Z dus helemaal niets, precies op het moment dat je het nodig hebt.
+      const inTekstveld =
+        doel?.isContentEditable === true ||
+        doel?.tagName === 'TEXTAREA' ||
+        (doel?.tagName === 'INPUT' && !GEEN_TEKSTVELD.has((doel as HTMLInputElement).type))
+      if (e.key.toLowerCase() === 'z' && !inTekstveld) {
         e.preventDefault()
         if (e.shiftKey) history.redo()
         else history.undo()

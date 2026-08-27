@@ -325,6 +325,7 @@ function Aanwijzers({
       by: 0.3,
       text: '',
       reveal: 'always',
+      size: 1,
       line: true,
       icon: null,
       dotColor: null,
@@ -393,6 +394,23 @@ function Aanwijzers({
                     )
                   }
                 />
+                {a.line && (
+                  <Slider
+                    label={a.icon ? 'Grootte van de picto' : 'Grootte van de stip'}
+                    value={a.size}
+                    min={0.4}
+                    max={3}
+                    step={0.1}
+                    suffix="×"
+                    reset={1}
+                    onChange={(v) =>
+                      onWijzig(
+                        annotations.map((x) => (x.id === a.id ? { ...x, size: v } : x)),
+                        `aanwijzer-maat:${a.id}`,
+                      )
+                    }
+                  />
+                )}
                 {a.line && (
                   <Toggle
                     label="Pas tonen bij aanwijzen"
@@ -692,7 +710,11 @@ function FocalPicker({
               alt=""
               data-aanwijzer={a.id}
               className={`focal-an is-icon ${a.id === actieveAanwijzer ? 'is-active' : ''}`}
-              style={{ left: `${a.x * 100}%`, top: `${a.y * 100}%` }}
+              style={{
+                left: `${a.x * 100}%`,
+                top: `${a.y * 100}%`,
+                ['--an-schaal' as string]: a.size,
+              }}
               title={`Picto ${i + 1} — sleep, of verplaats met de pijltjestoetsen`}
               draggable={false}
               tabIndex={0}
@@ -705,7 +727,11 @@ function FocalPicker({
               key={a.id}
               data-aanwijzer={a.id}
               className={`focal-an ${a.id === actieveAanwijzer ? 'is-active' : ''}`}
-              style={{ left: `${a.x * 100}%`, top: `${a.y * 100}%` }}
+              style={{
+                left: `${a.x * 100}%`,
+                top: `${a.y * 100}%`,
+                ['--an-schaal' as string]: a.size,
+              }}
               title={`Anker van ballon ${i + 1} — sleep, of verplaats met de pijltjestoetsen`}
               tabIndex={0}
               role="button"

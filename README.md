@@ -25,7 +25,8 @@ publiceren.
   binnen als kale tekst.
 - **Aanwijzers op het beeld, in drie smaken** — een punt met lijn en
   tekstballon; alleen een punt (of een eigen geüploade picto) als markering;
-  of een los tekstblok zonder punt en lijn. Anker en ballon sleep je elk vrij
+  of een los tekstblok zonder punt en lijn. De maat van punt en picto is per
+  aanwijzer in te stellen, van half tot drie keer zo groot. Anker en ballon sleep je elk vrij
   naar hun plek. Alle posities staan in fracties, dus alles klopt op elk
   schermformaat. Ditzelfde mechanisme dient straks voor een aanklikbare kaart
   van Overijssel en voor toelichtingen op een grafiek.

@@ -1162,11 +1162,16 @@
   stroke: var(--oost-blauw);
   stroke-width: 2;
 }
+/* De handvatten in de kiezer schalen mee met de maat van de aanwijzer, maar
+   gedempt: dit zijn dingen om beet te pakken, niet de weergave zelf. Op ware
+   grootte zou een driemaal vergrote stip het kleine fotootje vullen en niet
+   meer te verslepen zijn. De echte maat zie je in de voorvertoning ernaast. */
 .focal-an {
+  --fp-schaal: clamp(0.7, var(--an-schaal, 1), 1.8);
   position: absolute;
-  width: 16px;
-  height: 16px;
-  margin: -8px 0 0 -8px;
+  width: calc(16px * var(--fp-schaal));
+  height: calc(16px * var(--fp-schaal));
+  margin: calc(-8px * var(--fp-schaal)) 0 0 calc(-8px * var(--fp-schaal));
   border-radius: 50%;
   background: var(--oost-blauw);
   border: 2px solid var(--oost-wit);
@@ -1259,9 +1264,9 @@
 
 /* Een picto als versleepbaar anker in het voorbeeldkader. */
 .focal-an.is-icon {
-  width: 30px;
-  height: 30px;
-  margin: -15px 0 0 -15px;
+  width: calc(30px * var(--fp-schaal));
+  height: calc(30px * var(--fp-schaal));
+  margin: calc(-15px * var(--fp-schaal)) 0 0 calc(-15px * var(--fp-schaal));
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.85);
   border: 1.5px solid var(--oost-wit);
