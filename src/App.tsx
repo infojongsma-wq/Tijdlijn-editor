@@ -148,14 +148,20 @@ export function App() {
     setMelding(null)
   }, [history, doc.cards.length])
 
-  const laadVoorbeeld = useCallback(() => {
+  const laadVoorbeeld = useCallback(async () => {
     if (doc.cards.length > 0 && !window.confirm('Het voorbeelddossier laden? Je huidige tijdlijn wordt vervangen.')) {
       return
     }
-    const voorbeeld = demoDoc()
-    history.reset(voorbeeld)
-    setSelectedId(voorbeeld.cards[0]?.id ?? null)
-    setMelding(null)
+    try {
+      // Het voorbeeld staat als bestand naast de app en wordt pas hier
+      // opgehaald; zie demoDoc().
+      const voorbeeld = await demoDoc()
+      history.reset(voorbeeld)
+      setSelectedId(voorbeeld.cards[0]?.id ?? null)
+      setMelding(null)
+    } catch {
+      setMelding('Het voorbeelddossier kon niet geladen worden.')
+    }
   }, [history, doc.cards.length])
 
   const open = useCallback(
@@ -278,7 +284,7 @@ export function App() {
           >
             ▶ Bekijken
           </button>
-          <Button onClick={laadVoorbeeld} title="Vult de editor met het wolvendossier">
+          <Button onClick={() => void laadVoorbeeld()} title="Vult de editor met het voorbeelddossier">
             Voorbeeld
           </Button>
           <Button onClick={nieuw}>Nieuw</Button>

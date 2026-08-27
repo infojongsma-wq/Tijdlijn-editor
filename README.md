@@ -164,7 +164,7 @@ src/
     history.ts    ongedaan maken
     storage.ts    opslaan, openen, tussentijds bewaren
     contrast.ts   contrastcontrole volgens WCAG
-    demo.ts       het wolvendossier als testmateriaal
+    demo.ts       laadt het voorbeeldbestand achter de knop Voorbeeld
   player/     wat de kijker ziet
   viewer/     de kijk-pagina: alleen de speler, voor de embed
   ui/         wat de redacteur bedient
@@ -209,6 +209,28 @@ tussen 13 maart en 2 juni 2025. Dat is **testmateriaal**, geen inhoud die bij de
 app hoort. Het staat erin om de editor te vullen met koppen van echte lengte,
 datums die samenvallen en foto's met echte rechtenvermeldingen. Wie een eigen
 tijdlijn begint, gooit het weg met *Nieuw*.
+
+De foto's zijn van derden (Getty Images, iStock, Pixabay). Voor intern gebruik
+is dat geen bezwaar, maar het is een reden om het voorbeeld te vervangen door
+eigen werk.
+
+### Het voorbeeld vervangen
+
+Het voorbeeld is een gewoon tijdlijnbestand — precies wat de knop *Opslaan*
+oplevert. Omwisselen gaat zo:
+
+1. Maak in de editor de tijdlijn die het voorbeeld moet worden, met eigen beeld.
+2. Klik op **Opslaan**. Je krijgt een bestand als `mijn-dossier.tijdlijn.json`.
+3. Zet dat bestand in de repo op `src/assets/voorbeeld.tijdlijn.json`, over het
+   bestaande heen.
+4. Bouw opnieuw: `npm run build`.
+
+Meer is het niet: geen code aanpassen, geen foto's apart klaarzetten. De foto's
+zitten al in het bestand, en de knop *Voorbeeld* leest het door dezelfde
+controle als elk ander bestand dat je opent.
+
+Het bestand wordt pas opgehaald als iemand op *Voorbeeld* drukt, dus een groot
+voorbeeld vertraagt het openen van de editor niet.
 
 ## Nog niet gebouwd
 
