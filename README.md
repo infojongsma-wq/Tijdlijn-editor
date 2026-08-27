@@ -120,6 +120,11 @@ Download `dist-singlefile/index.html` en open het met een dubbelklik. Alles zit
 in dat ene bestand: de fonts, het voorbeelddossier en het programma zelf. Er is
 geen internetverbinding en geen installatie nodig.
 
+## Voor de beheerder
+
+Zelf hosten op een eigen server, met de eisen die daarbij horen: zie
+[HOSTING.md](HOSTING.md).
+
 ## Zelf bouwen of doorontwikkelen
 
 Hiervoor is [Node.js](https://nodejs.org) 20 of nieuwer nodig.

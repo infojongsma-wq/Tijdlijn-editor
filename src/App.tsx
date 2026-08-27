@@ -189,6 +189,30 @@ export function App() {
     }
   }, [doc])
 
+  const codeRef = useRef<HTMLTextAreaElement>(null)
+  const [gekopieerd, setGekopieerd] = useState(false)
+
+  /**
+   * De code naar het klembord.
+   *
+   * `navigator.clipboard` bestaat alleen op https en op localhost. Draait de
+   * editor straks op een intern adres zonder certificaat, dan is hij er niet en
+   * deed de knop stilletjes niets. Dan selecteren we de tekst, zodat Ctrl+C het
+   * alsnog doet en zichtbaar is wat er gebeurt.
+   */
+  const kopieer = useCallback(async () => {
+    const tekst = codeRef.current?.value ?? ''
+    try {
+      if (!navigator.clipboard) throw new Error('geen klembord')
+      await navigator.clipboard.writeText(tekst)
+      setGekopieerd(true)
+      setTimeout(() => setGekopieerd(false), 2000)
+    } catch {
+      codeRef.current?.select()
+      setMelding('Kopiëren kan hier niet automatisch. De code is geselecteerd — druk op Ctrl+C.')
+    }
+  }, [])
+
   const volledigRef = useRef<HTMLDivElement>(null)
   const bekijkKnopRef = useRef<HTMLButtonElement>(null)
   const embedRef = useRef<HTMLDivElement>(null)
@@ -334,11 +358,16 @@ export function App() {
               <li>Vul dat adres hieronder in bij <code>src</code>.</li>
               <li>Plak deze regels in het artikel.</li>
             </ol>
-            <textarea className="embed-code" readOnly rows={6} value={embed} aria-label="Code om te plakken" />
+            <textarea
+              className="embed-code"
+              readOnly
+              rows={6}
+              value={embed}
+              ref={codeRef}
+              aria-label="Code om te plakken"
+            />
             <div className="embed-knoppen">
-              <Button onClick={() => void navigator.clipboard?.writeText(embed)}>
-                Kopieer de code
-              </Button>
+              <Button onClick={() => void kopieer()}>{gekopieerd ? 'Gekopieerd' : 'Kopieer de code'}</Button>
               <Button onClick={() => setEmbed(null)} variant="primary" title="Sluiten (Esc)">
                 Klaar
               </Button>
